@@ -22,6 +22,7 @@ class ContinuousThoughtMachineRL(ContinuousThoughtMachine):
                  prediction_reshaper=[-1],
                  dropout=0,
                  neuron_select_type='first-last',
+                 synapse_min_width=16,
                  ):
         super().__init__(
             iterations=iterations,
@@ -42,6 +43,7 @@ class ContinuousThoughtMachineRL(ContinuousThoughtMachine):
             backbone_type=backbone_type,
             n_random_pairing_self=0,
             positional_embedding_type='none',
+            synapse_min_width=synapse_min_width,
         )
 
         # --- Use a minimal CTM w/out input (action) synch ---
@@ -96,7 +98,7 @@ class ContinuousThoughtMachineRL(ContinuousThoughtMachine):
         return None
 
 
-    def get_synapses(self, synapse_depth, d_model, dropout):
+    def get_synapses(self, synapse_depth, d_model, dropout, synapse_min_width):
         """
         Get the synapse module.
 
@@ -116,7 +118,7 @@ class ContinuousThoughtMachineRL(ContinuousThoughtMachine):
                 nn.LayerNorm(d_model)
             )
         else:
-            return SynapseUNET(d_model, synapse_depth, 16, dropout)
+            return SynapseUNET(d_model, synapse_depth, synapse_min_width, dropout)
 
     def set_synchronisation_parameters(self, synch_type: str, n_synch: int, n_random_pairing_self: int = 0):
         """Set the parameters for the synchronisation of neurons."""

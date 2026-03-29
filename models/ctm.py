@@ -98,6 +98,7 @@ class ContinuousThoughtMachine(nn.Module, PyTorchModelHubMixin):
                  dropout_nlm=None,
                  neuron_select_type='random-pairing',  
                  n_random_pairing_self=0,
+                 synapse_min_width=16,
                  ):
         super(ContinuousThoughtMachine, self).__init__()
 
@@ -129,7 +130,7 @@ class ContinuousThoughtMachine(nn.Module, PyTorchModelHubMixin):
         self.attention = nn.MultiheadAttention(self.d_input, heads, dropout, batch_first=True) if heads else None
         
         # --- Core CTM Modules ---
-        self.synapses = self.get_synapses(synapse_depth, d_model, dropout)
+        self.synapses = self.get_synapses(synapse_depth, d_model, dropout, synapse_min_width)
         self.trace_processor = self.get_neuron_level_models(deep_nlms, do_layernorm_nlm, memory_length, memory_hidden_dims, d_model, dropout_nlm)
 
         #  --- Start States ---
@@ -412,7 +413,7 @@ class ContinuousThoughtMachine(nn.Module, PyTorchModelHubMixin):
                 )
             )
 
-    def get_synapses(self, synapse_depth, d_model, dropout):
+    def get_synapses(self, synapse_depth, d_model, dropout, synapse_min_width):
         """
         The synapse model is the recurrent model in the CTM. It's purpose is to share information
         across neurons. If using depth of 1, this is just a simple single layer with nonlinearity and layernomr.
@@ -432,7 +433,7 @@ class ContinuousThoughtMachine(nn.Module, PyTorchModelHubMixin):
                 nn.LayerNorm(d_model)
             )
         else:
-            return SynapseUNET(d_model, synapse_depth, 16, dropout)  # hard-coded minimum width of 16; future work TODO.
+            return SynapseUNET(d_model, synapse_depth, synapse_min_width, dropout)
 
     def set_synchronisation_parameters(self, synch_type: str, n_synch: int, n_random_pairing_self: int = 0):
             """
