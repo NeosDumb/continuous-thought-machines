@@ -129,11 +129,7 @@ class Bottleneck(nn.Module):
 
         out += identity
 
-        
-        # activation = None
-        # activation = out.detach().cpu().numpy()
         out = self.relu(out)
-        # return out, activation
 
         return out
 
@@ -203,17 +199,6 @@ class ResNet(nn.Module):
                         block, 512, layers[3], stride=stride, dilate=replace_stride_with_dilation[2]
                     )
 
-        # NOTE: Commented this out as it is not used anymore for this work, kept it for reference
-        # self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        # self.fc = nn.Linear(512 * block.expansion, num_classes)
-
-        # for m in self.modules():
-        #     if isinstance(m, nn.Conv2d):
-        #         nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
-        #     elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-        #         nn.init.constant_(m.weight, 1)
-        #         nn.init.constant_(m.bias, 0)
-
         # Zero-initialize the last BN in each residual branch,
         # so that the residual branch starts with zeros, and each residual block behaves like an identity.
         # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
@@ -271,7 +256,6 @@ class ResNet(nn.Module):
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-        # if return_activations: activations.append(torch.clone(x))
         x = self.layer1(x)
 
         if 2 in self.feature_scales:
