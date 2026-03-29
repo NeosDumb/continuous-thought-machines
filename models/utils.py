@@ -8,8 +8,8 @@ def compute_decay(T, params, clamp_lims=(0, 15)):
     This function computes exponential decays for learnable synchronisation 
     interactions between pairs of neurons. 
     """
-    assert len(clamp_lims), 'Clamp lims should be length 2'
-    assert type(clamp_lims) == tuple, 'Clamp lims should be tuple'
+    assert isinstance(clamp_lims, tuple), 'Clamp lims should be tuple'
+    assert len(clamp_lims) == 2, 'Clamp lims should be length 2'
     
     indices = torch.arange(T-1, -1, -1, device=params.device).reshape(T, 1).expand(T, params.shape[0])
     out = torch.exp(-indices * torch.clamp(params, clamp_lims[0], clamp_lims[1]).unsqueeze(0))
