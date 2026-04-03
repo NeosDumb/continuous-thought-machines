@@ -397,12 +397,12 @@ if __name__ == "__main__":
         global_step, training_iteration, episode_rewards_tracking, episode_lengths_tracking, global_steps_tracking = 0, 0, [], [], []
 
     # Rollout buffer
-    obs = torch.zeros((args.num_steps, args.num_envs) + envs.single_observation_space.shape).to(device)
-    actions = torch.zeros((args.num_steps, args.num_envs) + envs.single_action_space.shape).to(device)
-    logprobs = torch.zeros((args.num_steps, args.num_envs)).to(device)
-    rewards = torch.zeros((args.num_steps, args.num_envs)).to(device)
-    dones = torch.zeros((args.num_steps, args.num_envs)).to(device)
-    values = torch.zeros((args.num_steps, args.num_envs)).to(device)
+    obs = torch.zeros((args.num_steps, args.num_envs) + envs.single_observation_space.shape, device=device)
+    actions = torch.zeros((args.num_steps, args.num_envs) + envs.single_action_space.shape, device=device)
+    logprobs = torch.zeros((args.num_steps, args.num_envs), device=device)
+    rewards = torch.zeros((args.num_steps, args.num_envs), device=device)
+    dones = torch.zeros((args.num_steps, args.num_envs), device=device)
+    values = torch.zeros((args.num_steps, args.num_envs), device=device)
 
     start_time = time.time()
     next_obs, _ = envs.reset(seed=args.seed)
