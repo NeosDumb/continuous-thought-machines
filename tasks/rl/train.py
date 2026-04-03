@@ -433,8 +433,8 @@ if __name__ == "__main__":
             logprobs[step] = logprob
             next_obs, reward, terminations, truncations, infos = envs.step(action.cpu().numpy())
             next_done = np.logical_or(terminations, truncations)
-            rewards[step] = torch.tensor(reward).to(device).view(-1)
-            next_obs, next_done = torch.Tensor(next_obs).to(device), torch.Tensor(next_done).to(device)
+            rewards[step] = torch.tensor(reward, device=device).view(-1)
+            next_obs, next_done = torch.tensor(next_obs, dtype=torch.float32, device=device), torch.tensor(next_done, dtype=torch.float32, device=device)
 
             if "final_info" in infos:
                 for info in infos["final_info"]:
