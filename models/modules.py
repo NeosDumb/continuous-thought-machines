@@ -668,9 +668,9 @@ class CustomRotationalEmbedding1D(nn.Module):
     def __init__(self, d_model):
         super(CustomRotationalEmbedding1D, self).__init__()
         self.projection = nn.Linear(2, d_model)
+        self.register_buffer('start_vector', torch.tensor([0., 1.], dtype=torch.float))
 
     def forward(self, x):
-        start_vector = torch.tensor([0., 1.], device=x.device, dtype=torch.float)
         theta_rad = torch.deg2rad(torch.linspace(0, 180, x.size(2), device=x.device))
         cos_theta = torch.cos(theta_rad)
         sin_theta = torch.sin(theta_rad)
@@ -684,7 +684,7 @@ class CustomRotationalEmbedding1D(nn.Module):
         ], dim=1)  # Shape: (height, 2, 2)
 
         # Rotate the start vector
-        rotated_vectors = torch.einsum('bij,j->bi', rotation_matrices, start_vector)
+        rotated_vectors = torch.einsum('bij,j->bi', rotation_matrices, self.start_vector)
 
         pe = self.projection(rotated_vectors)
         pe = torch.repeat_interleave(pe.unsqueeze(0), x.size(0), 0)
