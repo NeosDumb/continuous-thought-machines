@@ -217,6 +217,7 @@ if __name__=='__main__':
 
 
 
+                        concatenated_probs = softmax(concatenated_predictions, 1)
                         for topk in [1, 5]:
                             concatenated_predictions_argsorted_topk = concatenated_predictions_argsorted[:,:topk]
 
@@ -225,7 +226,7 @@ if __name__=='__main__':
                             with tqdm(total=(concatenated_predictions.shape[-1]), initial=0, leave=False, position=1, dynamic_ncols=True) as pbarinner:
                                 pbarinner.set_description('Acc types')
                                 for stepi in np.arange(concatenated_predictions.shape[-1]):
-                                    pred_avg = softmax(concatenated_predictions, 1)[:,:,:stepi+1].mean(-1).argsort(1)[:,-topk:]
+                                    pred_avg = concatenated_probs[:,:,:stepi+1].mean(-1).argsort(1)[:,-topk:]
                                     pred_instant = concatenated_predictions_argsorted_topk[:,:,stepi]
                                     pred_certain = concatenated_predictions_argsorted_topk[np.arange(concatenated_predictions.shape[0]),:, concatenated_certainties[:,1,:stepi+1].argmax(1)]
                                     pred_avg_logits = concatenated_predictions[:,:,:stepi+1].mean(-1).argsort(1)[:,-topk:]
@@ -370,7 +371,7 @@ if __name__=='__main__':
                                 color = cmap_calib(color_linspace[stepi])
                                 pred = concatenated_predictions[:,:,stepi].argmax(1)
                                 is_correct = pred == concatenated_targets  # BxT
-                                probabilities = softmax(concatenated_predictions[:,:,:stepi+1], axis=1)[np.arange(concatenated_predictions.shape[0]),pred].mean(-1)#softmax(concatenated_predictions[:,:,stepi], axis=1).max(1)
+                                probabilities = concatenated_probs[np.arange(concatenated_predictions.shape[0]), pred, :stepi+1].mean(-1)
                                 probability_space = np.linspace(0, 1, 10)
                                 accuracies_per_bin = []
                                 bin_centers = []
