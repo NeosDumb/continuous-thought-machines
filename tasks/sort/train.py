@@ -252,7 +252,7 @@ if __name__=='__main__':
     if args.reload:
         if os.path.isfile(f'{args.log_dir}/checkpoint.pt'):
             print(f'Reloading from: {args.log_dir}/checkpoint.pt')
-            checkpoint = torch.load(f'{args.log_dir}/checkpoint.pt', map_location=device, weights_only=False)
+            checkpoint = torch.load(f'{args.log_dir}/checkpoint.pt', map_location=device, weights_only=True)
             model.load_state_dict(checkpoint['model_state_dict'], strict=True)
             if not args.reload_model_only:
                 print('Reloading optimizer etc.')

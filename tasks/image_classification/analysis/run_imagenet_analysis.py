@@ -91,7 +91,7 @@ if __name__=='__main__':
 
     # --- Load Checkpoint & Model ---
     print(f"Loading checkpoint: {args.checkpoint}")
-    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False) # removed weights_only=False
+    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=True)
     model_args = checkpoint['args']
 
     # Handle legacy arguments from checkpoint if necessary

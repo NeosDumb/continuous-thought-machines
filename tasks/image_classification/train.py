@@ -333,7 +333,7 @@ if __name__=='__main__':
         checkpoint_path = f'{args.log_dir}/checkpoint.pt'
         if os.path.isfile(checkpoint_path):
             print(f'Reloading from: {checkpoint_path}')
-            checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+            checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
             if not args.strict_reload: print('WARNING: not using strict reload for model weights!')
             load_result = model.load_state_dict(checkpoint['model_state_dict'], strict=args.strict_reload)
             print(f" Loaded state_dict. Missing: {load_result.missing_keys}, Unexpected: {load_result.unexpected_keys}")

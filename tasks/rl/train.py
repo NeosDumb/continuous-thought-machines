@@ -269,7 +269,7 @@ def save_model(agent, optimizer, global_step, training_iteration, episode_reward
     }, save_path)
 
 def load_model(agent, optimizer, checkpoint_path, device):
-    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
     agent.load_state_dict(checkpoint['model_state_dict'])
 
     if optimizer is not None and 'optimizer_state_dict' in checkpoint:

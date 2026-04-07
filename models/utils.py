@@ -104,7 +104,7 @@ def get_checkpoint_files(filepath):
     return [os.path.join(filepath, f) for f in files]
 
 def load_checkpoint(checkpoint_path, device):
-    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
     return checkpoint
 
 def get_model_args_from_checkpoint(checkpoint):
