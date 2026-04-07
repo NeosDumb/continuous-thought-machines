@@ -32,7 +32,7 @@ def load_training_data_from_checkpoint(load_path, device="cpu"):
     if not os.path.exists(load_path):
         raise FileNotFoundError(f"No checkpoint found at {load_path}.")
     
-    checkpoint = torch.load(load_path, map_location=device)
+    checkpoint = torch.load(load_path, map_location=device, weights_only=True)
     
     training_iteration = checkpoint.get('training_iteration', 0)
     train_losses = checkpoint.get('train_losses', [])

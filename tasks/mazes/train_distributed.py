@@ -350,7 +350,7 @@ if __name__=='__main__':
             print(f'Rank {rank}: Reloading from: {chkpt_path}')
             if not args.strict_reload: print('WARNING: not using strict reload for model weights!')
 
-            checkpoint = torch.load(chkpt_path, map_location=map_location, weights_only=False)
+            checkpoint = torch.load(chkpt_path, map_location=map_location, weights_only=True)
 
             model_to_load = model.module if isinstance(model, DDP) else model
             state_dict = checkpoint['model_state_dict']

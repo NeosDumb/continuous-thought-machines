@@ -168,7 +168,7 @@ if __name__=='__main__':
     # Now that everything is initliased, reload if desired
     if args.reload and (latest_checkpoint_path := get_latest_checkpoint(args.log_dir)):
         print(f'Reloading from: {latest_checkpoint_path}')
-        checkpoint = torch.load(f'{latest_checkpoint_path}', weights_only=False)
+        checkpoint = torch.load(f'{latest_checkpoint_path}', weights_only=True)
         model.load_state_dict(checkpoint['model_state_dict'], strict=True)
         if not args.reload_model_only:
             print('Reloading optimizer etc.')

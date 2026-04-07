@@ -44,7 +44,7 @@ def get_checkpoint_paths_for_environment(environment, log_dir):
     return checkpoint_files
 
 def load_checkpoint(checkpoint_path, device):
-    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
     print(f"Loaded checkpoint from {checkpoint_path}.")
     return checkpoint
 

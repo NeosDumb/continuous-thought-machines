@@ -94,7 +94,7 @@ def parse_args():
 def _load_ctm_model(checkpoint_path, device):
     """Loads the ContinuousThoughtMachine model from a checkpoint."""
     print(f"Loading checkpoint: {checkpoint_path}")
-    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
     model_args = checkpoint['args']
 
     # Handle legacy arguments for model_args

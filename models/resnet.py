@@ -273,7 +273,7 @@ def _resnet(in_channels, feature_scales, stride, arch, block, layers, pretrained
         assert in_channels==3
         script_dir = os.path.dirname(__file__)
         state_dict = torch.load(
-            script_dir + '/state_dicts/' + arch + ".pt", map_location=device
+            script_dir + '/state_dicts/' + arch + ".pt", map_location=device, weights_only=True
         )
         model.load_state_dict(state_dict, strict=False)
     return model

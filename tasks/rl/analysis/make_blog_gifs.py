@@ -15,7 +15,7 @@ from tasks.image_classification.plotting import save_frames_to_mp4
 
 
 def load_model(agent, checkpoint_path, device):
-    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
     agent.load_state_dict(checkpoint['model_state_dict'])
     pass
 

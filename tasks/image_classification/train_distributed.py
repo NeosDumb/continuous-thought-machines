@@ -350,7 +350,7 @@ if __name__=='__main__':
         chkpt_path = f'{args.log_dir}/checkpoint.pt'
         if os.path.isfile(chkpt_path):
             print(f'Rank {rank}: Reloading from: {chkpt_path}')
-            checkpoint = torch.load(chkpt_path, map_location=map_location, weights_only=False)
+            checkpoint = torch.load(chkpt_path, map_location=map_location, weights_only=True)
 
             # Determine underlying model based on whether DDP wrapping occurred
             model_to_load = model.module if isinstance(model, DDP) else model
