@@ -15,7 +15,6 @@ import torch.nn as nn
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
-from utils.samplers import FastRandomDistributedSampler 
 from tqdm.auto import tqdm
 
 from tasks.image_classification.train import get_dataset # Use shared get_dataset
@@ -106,7 +105,6 @@ def parse_args():
     parser.add_argument('--weight_decay_exclusion_list', type=str, nargs='+', default=[], help='List to exclude from weight decay. Typically good: bn, ln, bias, start')
     parser.add_argument('--gradient_clipping', type=float, default=-1, help='Gradient quantile clipping value (-1 to disable).')
     parser.add_argument('--num_workers_train', type=int, default=1, help='Num workers training.')
-    parser.add_argument('--use_custom_sampler', action=argparse.BooleanOptionalAction, default=False, help='Use custom fast sampler to avoid reshuffling.')
     parser.add_argument('--do_compile', action=argparse.BooleanOptionalAction, default=False, help='Try to compile model components.')
 
     # Housekeeping 
@@ -195,10 +193,7 @@ if __name__=='__main__':
     train_data, test_data, class_labels, dataset_mean, dataset_std = get_dataset(args.dataset, args.data_root)
 
     # Setup Samplers
-    # This custom sampler is useful when using large batch sizes for Cifar. Otherwise the reshuffle happens tediously often
-    train_sampler = (FastRandomDistributedSampler(train_data, num_replicas=world_size, rank=rank, seed=args.seed, epoch_steps=int(10e10))
-                     if args.use_custom_sampler else
-                     DistributedSampler(train_data, num_replicas=world_size, rank=rank, shuffle=True, seed=args.seed))
+    train_sampler = DistributedSampler(train_data, num_replicas=world_size, rank=rank, shuffle=True, seed=args.seed)
     test_sampler = DistributedSampler(test_data, num_replicas=world_size, rank=rank, shuffle=False, seed=args.seed) # No shuffle needed for test; consistent
 
     # Setup DataLoaders
@@ -446,7 +441,7 @@ if __name__=='__main__':
     for bi in range(start_iter, args.training_iterations):
 
         # Set sampler epoch (important for shuffling in DistributedSampler)
-        if not args.use_custom_sampler and hasattr(train_sampler, 'set_epoch'):
+        if hasattr(train_sampler, 'set_epoch'):
             train_sampler.set_epoch(bi)
 
         current_lr = optimizer.param_groups[-1]['lr']
