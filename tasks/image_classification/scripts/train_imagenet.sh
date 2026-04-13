@@ -34,5 +34,4 @@ torchrun --standalone --nnodes=1 --nproc_per_node=8 -m tasks.image_classificatio
 --seed 1 \
 --use_amp \
 --reload  \
---num_workers_train 8 \
---use_custom_sampler
+--num_workers_train 8
