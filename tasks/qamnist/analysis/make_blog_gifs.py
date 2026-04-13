@@ -27,16 +27,18 @@ from tasks.qamnist.analysis.run import prepare_data_for_analysis
 from tasks.parity.utils import reshape_attention_weights
 from tasks.image_classification.plotting import save_frames_to_mp4
 
+_MODULAR_EXPR_RE = re.compile(r"(.*)mod\s+(\d+)\s*=\s*(-?\d+)")
+
 def compose_modular_expressions(input_string):
     lines = input_string.strip().split('\n')
     parsed = []
 
     for line in lines:
-        match = re.match(r"(.*)mod\s+(\d+)\s*=\s*(-?\d+)", line)
+        match = _MODULAR_EXPR_RE.match(line)
         if not match:
             raise ValueError(f"Invalid format: '{line}'")
         expr, mod_val, result = match.groups()
-        parsed.append((expr.strip(), int(mod_val), int(result)))
+        parsed.append((expr.strip(), int(mod_val), result))
 
     # Start with first expression as value provider
     for i in range(len(parsed) - 1):
@@ -44,9 +46,11 @@ def compose_modular_expressions(input_string):
         inner_expr, inner_mod, inner_result = parsed[i + 1]
 
         # Replace the outer result in inner expression
+        pattern = fr"\b{outer_result}\b"
+        replacement = f"(({outer_expr}) mod {outer_mod})"
         new_inner_expr = re.sub(
-            fr"\b{outer_result}\b",
-            f"(({outer_expr}) mod {outer_mod})",
+            pattern,
+            replacement,
             inner_expr,
             count=1
         )
@@ -62,7 +66,7 @@ def compose_modular_expressions(input_string):
     first_paren = final_composed.find('(')
     last_paren = final_composed.rfind(')')
     if first_paren != -1 and last_paren != -1 and first_paren < last_paren:
-        final_composed = final_composed[:first_paren] + final_composed[first_paren+1:last_paren] + final_composed[last_paren+1:]
+        final_composed = f"{final_composed[:first_paren]}{final_composed[first_paren+1:last_paren]}{final_composed[last_paren+1:]}"
 
     return final_composed
 
@@ -100,15 +104,15 @@ def make_qamnist_gif(predictions, targets, post_activations, input_gates, inputs
         )
 
             
+    if question_readable:
+        raw = compose_modular_expressions(question_readable)
+        raw = raw.replace("mod", r"\mod")
+        full_text = f"${raw}$"
+
     for stepi in range(n_steps):
         fig_gif, axes_gif = plt.subplot_mosaic(mosaic=mosaic, figsize=(31*figscale*8/4, 76*figscale))
 
         if question_readable:
-            raw = compose_modular_expressions(question_readable)
-
-            print(raw)
-            raw = raw.replace("mod", r"\mod")
-            full_text = r"$" + raw + r"$"
             axes_gif["eq"].text(
                 0.5, 0.5, full_text,
                 fontsize=32, ha="center", va="center",
