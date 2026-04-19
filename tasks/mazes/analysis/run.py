@@ -228,7 +228,7 @@ if __name__=='__main__':
                     frame_resized = cv2.resize(frame, (int(current_maze_np.shape[1]*4), int(current_maze_np.shape[0]*4)), interpolation=cv2.INTER_NEAREST) # Corrected shape[1]*4 for height
                     long_frames.append((np.clip(frame_resized, 0, 1) * 255).astype(np.uint8))
                 
-                where_most_certain = certainties[0, 1].argmax().item()
+                where_most_certain = certainties[0, 1].argmax()
                 chosen_pred_route = predictions[0, :, where_most_certain].reshape(-1, 5).argmax(-1).detach().cpu().numpy()
                 current_start_loc_list = np.argwhere((current_maze_np == [1, 0, 0]).all(axis=2)).tolist()
                 
