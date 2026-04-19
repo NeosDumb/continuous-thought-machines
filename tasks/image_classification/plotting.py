@@ -1,26 +1,19 @@
 
-import numpy as np
-import cv2
-import torch
-import os
-import imageio
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-from matplotlib import patheffects
-mpl.use('Agg')
-import seaborn as sns
-import numpy as np
-from tqdm.auto import tqdm
-sns.set_style('darkgrid')
-
-from tqdm.auto import tqdm
-from scipy import ndimage
-import umap
-from scipy.special import softmax
-
 import subprocess as sp
-import cv2 # Still potentially useful for color conversion checks if needed
-import os
+
+import imageio
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+import torch
+import umap
+from matplotlib import patheffects
+from scipy import ndimage
+from tqdm.auto import tqdm
+
+mpl.use('Agg')
+sns.set_style('darkgrid')
 
 def save_frames_to_mp4(frames, output_filename, fps=15.0, gop_size=None, crf=23, preset='medium', pix_fmt='yuv420p'):
     """
@@ -421,8 +414,7 @@ def make_classification_gif(image, target, predictions, certainties, post_activa
             axes['probabilities'].axis('off')
 
 
-            for i, (name) in enumerate(top_classes):
-                prob = ps[i]
+            for i, name in enumerate(top_classes):
                 is_correct = name==class_labels[true_class]
                 fg_color = 'darkgreen' if is_correct else 'crimson'
                 text_str = f'{name[:40]}'
