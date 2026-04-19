@@ -40,6 +40,26 @@ class Squeeze(nn.Module):
     def forward(self, x):
         return x.squeeze(self.dim)
 
+
+class Residual(nn.Module):
+    """
+    Residual Module.
+
+    Adds the input tensor to the output of a given function.
+    Useful for implementing residual connections within nn.Sequential.
+
+    Args:
+      fn (nn.Module): The function/module to apply to the input.
+    """
+
+    def __init__(self, fn):
+        super().__init__()
+        self.fn = fn
+
+    def forward(self, x):
+        return x + self.fn(x)
+
+
 # --- Core CTM Component Modules ---
 
 class SynapseUNET(nn.Module):
