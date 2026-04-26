@@ -1,8 +1,6 @@
 
 import numpy as np
-import cv2
 import torch
-import os
 import matplotlib.pyplot as plt 
 import imageio
 
@@ -84,7 +82,6 @@ def draw_path(x, route, valid_only=False, gt=False, cmap=None):
 
         # Update the current position
         current_pos = new_pos
-        # cv2.imwrite('maze2.png', x[:,:,::-1]*255)
 
     return x
 
