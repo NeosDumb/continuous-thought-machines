@@ -305,9 +305,9 @@ def plot_activations(agent, device, args):
             for _ in range(args.max_environment_steps):
                 with torch.no_grad():
                     action, _, _, value, eval_state, tracking_data, action_logits, action_probs = agent.get_action_and_value(
-                        torch.Tensor(eval_next_obs).to(device).unsqueeze(0),
+                        torch.tensor(eval_next_obs, device=device).unsqueeze(0),
                         eval_state,
-                        torch.Tensor([eval_next_done]).to(device),
+                        torch.tensor([eval_next_done], device=device),
                         track=True
                     )
                 eval_next_obs, reward, termination, truncation, _ = eval_env.step(action.cpu().numpy()[0])
@@ -406,8 +406,8 @@ if __name__ == "__main__":
 
     start_time = time.time()
     next_obs, _ = envs.reset(seed=args.seed)
-    next_obs = torch.Tensor(next_obs).to(device)
-    next_done = torch.zeros(args.num_envs).to(device)
+    next_obs = torch.tensor(next_obs, device=device)
+    next_done = torch.zeros(args.num_envs, device=device)
     next_state = agent.get_initial_state(args.num_envs)
 
     progress_bar = tqdm(range(training_iteration, args.num_training_iterations + 1), total=args.num_training_iterations + 1, initial=training_iteration, desc="Training", dynamic_ncols=True,)
@@ -421,7 +421,7 @@ if __name__ == "__main__":
             optimizer.param_groups[0]["lr"] = lrnow
 
         for step in range(0, args.num_steps):
-            next_obs = torch.Tensor(next_obs).to(device)
+            next_obs = torch.tensor(next_obs, device=device)
             global_step += args.num_envs
             obs[step] = next_obs
             dones[step] = next_done
@@ -476,7 +476,7 @@ if __name__ == "__main__":
                 next_state,
                 next_done,
             ).reshape(1, -1)
-            advantages = torch.zeros_like(rewards).to(device)
+            advantages = torch.zeros_like(rewards)
             lastgaelam = 0
             for t in reversed(range(args.num_steps)):
                 if t == args.num_steps - 1:
