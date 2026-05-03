@@ -129,8 +129,11 @@ def plot_loss_all_runs(training_data, evaluate_every, save_path="train_loss_comp
     plt.savefig(save_path.replace(".png", ".pdf"), format="pdf")
     plt.close(fig)
 
+ZERO_ZERO_OP_RE = re.compile(r'\((\d) [\+\-] (\d)\)')
+
+
 def contains_only_zero_zero_ops(q):
-    matches = re.findall(r'\((\d) [\+\-] (\d)\)', q)
+    matches = ZERO_ZERO_OP_RE.findall(q)
     return all(a == b == '0' for a, b in matches) and len(matches) > 0
 
 def create_case_study_plots(model, model_args, save_dir):
