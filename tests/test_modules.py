@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import pytest
 from models.modules import Residual, Identity
 
 def test_residual_identity():
