@@ -22,7 +22,6 @@ def compute_ctc_loss(predictions, targets, blank_label=0):
     """
 
     batch_size, num_classes, prediction_length = predictions.shape
-    _, target_length = targets.shape
 
     # 1. Log softmax on predictions:  Crucially, CTC loss requires log probabilities.
     log_probs = F.log_softmax(predictions, dim=1)  # Shape: [B, C, L]
