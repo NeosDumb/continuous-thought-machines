@@ -67,6 +67,54 @@ def test_compute_ctc_loss_variable_target_lengths():
 
     assert isinstance(loss, torch.Tensor)
     assert loss.dim() == 0
+
+def test_parity_loss_basic():
+    """Test basic functionality of parity_loss with standard inputs."""
+    batch_size = 2
+    parity_sequence_length = 5
+    num_classes = 5
+    internal_ticks = 4
+
+    # Predictions: [B, parity_sequence_length, class, internal_ticks]
+    predictions = torch.randn(batch_size, parity_sequence_length, num_classes, internal_ticks)
+
+    # Certainties: [B, 2, internal_ticks]
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    certainties[:, 0, :] = 1.0 - certainties[:, 1, :]
+
+    # Targets: [B, parity_sequence_length]
+    targets = torch.randint(0, num_classes, (batch_size, parity_sequence_length))
+
+    # Test use_most_certain=True
+    loss, loss_index_2 = parity_loss(predictions, certainties, targets, use_most_certain=True)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0
+    assert not torch.isnan(loss)
+    assert not torch.isinf(loss)
+
+    assert isinstance(loss_index_2, torch.Tensor)
+    assert loss_index_2.shape == (batch_size,)
+    assert loss_index_2.dtype == torch.long
+
+def test_parity_loss_use_most_certain_false():
+    """Test parity_loss when use_most_certain=False."""
+    batch_size = 3
+    parity_sequence_length = 4
+    num_classes = 5
+    internal_ticks = 6
+
+    predictions = torch.randn(batch_size, parity_sequence_length, num_classes, internal_ticks)
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    targets = torch.randint(0, num_classes, (batch_size, parity_sequence_length))
+
+    loss, loss_index_2 = parity_loss(predictions, certainties, targets, use_most_certain=False)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0
+
+    # When use_most_certain=False, loss_index_2 should be all -1
+    assert torch.all(loss_index_2 == -1)
     assert not torch.isnan(loss)
 
 def test_compute_ctc_loss_edge_cases():
