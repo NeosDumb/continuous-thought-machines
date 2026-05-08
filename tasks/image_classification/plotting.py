@@ -100,6 +100,9 @@ def save_frames_to_mp4(frames, output_filename, fps=15.0, gop_size=None, crf=23,
     if '\0' in output_filename_str:
         raise ValueError("output_filename contains null bytes, which is not allowed for security reasons.")
 
+    if '..' in output_filename_str.split(os.sep) or '..' in output_filename_str.split('/'):
+        raise ValueError("output_filename contains directory traversal elements ('..'), which is not allowed.")
+
     # To prevent option injection (filenames starting with '-'), we ensure it's treated as a path.
     # Prepending './' for relative paths starting with '-' is a standard safety measure.
     if output_filename_str.startswith('-') and not os.path.isabs(output_filename_str):
