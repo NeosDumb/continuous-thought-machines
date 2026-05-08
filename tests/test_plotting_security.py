@@ -59,6 +59,14 @@ class TestSaveFramesSecurity(unittest.TestCase):
         self.assertFalse(mock_popen.called)
 
     @patch('subprocess.Popen')
+    def test_directory_traversal_prevented(self, mock_popen):
+        output_filename = "../../../etc/passwd.mp4"
+        with self.assertRaises(ValueError) as cm:
+            save_frames_to_mp4(self.frames, output_filename)
+        self.assertIn("traversal", str(cm.exception).lower())
+        self.assertFalse(mock_popen.called)
+
+    @patch('subprocess.Popen')
     def test_absolute_path_with_hyphen(self, mock_popen):
         mock_process = MagicMock()
         mock_process.stdin = MagicMock()

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pytest
-from utils.losses import compute_ctc_loss, sort_loss, parity_loss
+from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss
 
 def test_compute_ctc_loss_basic():
     """Test basic functionality of compute_ctc_loss with standard inputs."""
@@ -162,3 +162,87 @@ def test_sort_loss():
 
     assert isinstance(loss, torch.Tensor)
     assert loss.dim() == 0
+
+def test_image_classification_loss_basic():
+    """Test basic functionality of image_classification_loss."""
+    batch_size = 4
+    num_classes = 10
+    internal_ticks = 5
+
+    predictions = torch.randn(batch_size, num_classes, internal_ticks)
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    # Ensure probabilities sum to 1 roughly (not strictly required but good for semantics)
+    certainties = certainties / certainties.sum(dim=1, keepdim=True)
+    targets = torch.randint(0, num_classes, (batch_size,))
+
+    loss, loss_index_2 = image_classification_loss(predictions, certainties, targets, use_most_certain=True)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0  # Scalar tensor
+    assert not torch.isnan(loss)
+    assert loss_index_2.shape == (batch_size,)
+    # Since use_most_certain=True, the indices should be between 0 and internal_ticks-1
+    assert (loss_index_2 >= 0).all() and (loss_index_2 < internal_ticks).all()
+
+def test_image_classification_loss_use_most_certain_false():
+    """Test functionality when use_most_certain is False."""
+    batch_size = 4
+    num_classes = 10
+    internal_ticks = 5
+
+    predictions = torch.randn(batch_size, num_classes, internal_ticks)
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    targets = torch.randint(0, num_classes, (batch_size,))
+
+    loss, loss_index_2 = image_classification_loss(predictions, certainties, targets, use_most_certain=False)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0
+    assert not torch.isnan(loss)
+    assert loss_index_2.shape == (batch_size,)
+    # Since use_most_certain=False, the indices should be -1
+    assert (loss_index_2 == -1).all()
+
+def test_image_classification_loss_logic():
+    """Test the logic of image_classification_loss manually."""
+    batch_size = 2
+    num_classes = 3
+    internal_ticks = 2
+
+    # Predictions: [B, C, ticks]
+    # Set it up so we know exact losses
+    # B=0:
+    # Target = 0
+    # Tick 0: C=[10, 0, 0] -> very low loss
+    # Tick 1: C=[0, 10, 0] -> high loss
+    # B=1:
+    # Target = 1
+    # Tick 0: C=[10, 0, 0] -> high loss
+    # Tick 1: C=[0, 10, 0] -> very low loss
+    predictions = torch.zeros(batch_size, num_classes, internal_ticks)
+    predictions[0, 0, 0] = 10.0
+    predictions[0, 1, 1] = 10.0
+    predictions[1, 0, 0] = 10.0
+    predictions[1, 1, 1] = 10.0
+
+    targets = torch.tensor([0, 1])
+
+    # Certainties: [B, 2, ticks]
+    # B=0: Most certain at tick 0 (certainties[0, 1, 0] > certainties[0, 1, 1])
+    # B=1: Most certain at tick 1
+    certainties = torch.zeros(batch_size, 2, internal_ticks)
+    certainties[0, 1, 0] = 0.9
+    certainties[0, 1, 1] = 0.1
+    certainties[1, 1, 0] = 0.1
+    certainties[1, 1, 1] = 0.9
+
+    loss, loss_index_2 = image_classification_loss(predictions, certainties, targets, use_most_certain=True)
+
+    # Minimum CE should pick tick 0 for B=0, tick 1 for B=1
+    # Both minimum CE losses are close to 0
+    # Certainties will also pick tick 0 for B=0, tick 1 for B=1
+    # Both selected losses are close to 0
+    assert loss.item() < 0.01
+
+    assert loss_index_2[0].item() == 0
+    assert loss_index_2[1].item() == 1
