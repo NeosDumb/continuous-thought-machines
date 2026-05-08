@@ -454,6 +454,9 @@ if __name__=='__main__':
             head_routes[-1] = []
             route_colours_step = [] # Store colors for each step's path segments
 
+            # Precompute probabilities for all steps
+            all_step_probs = torch.softmax(predictions[0], dim=0).detach().cpu()
+
             # --- Loop Through Each Step ---
             for step_i in range(n_steps):
 
@@ -559,7 +562,7 @@ if __name__=='__main__':
                 # --- Plot Probabilities ---
                 ax_prob = axes['probabilities']
                 # Get probabilities for the current step
-                ps = torch.softmax(predictions[0, :, step_i], -1).detach().cpu()
+                ps = all_step_probs[:, step_i]
                 k = 15 # Top k predictions
                 topk_probs, topk_indices = torch.topk(ps, k, dim=0, largest=True)
                 topk_indices = topk_indices.numpy()
@@ -754,6 +757,9 @@ if __name__=='__main__':
             head_routes = [] # Store (y,x) path points per head
             route_colours_step = [] # Store colors for each step's path segments
 
+            # Precompute probabilities for all steps
+            all_step_probs = torch.softmax(predictions[0], dim=0).detach().cpu()
+
             # --- Loop Through Each Step ---
             for step_i in range(n_steps):
 
@@ -833,7 +839,7 @@ if __name__=='__main__':
                 # --- Plot Probabilities ---
                 ax_prob = axes['probabilities']
                 # Get probabilities for the current step
-                ps = torch.softmax(predictions[0, :, step_i], -1).detach().cpu()
+                ps = all_step_probs[:, step_i]
                 k = 15 # Top k predictions
                 topk_probs, topk_indices = torch.topk(ps, k, dim=0, largest=True)
                 topk_indices = topk_indices.numpy()
