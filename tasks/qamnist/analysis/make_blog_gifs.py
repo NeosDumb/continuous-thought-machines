@@ -1,6 +1,5 @@
 import torch
 import os
-import math
 import imageio
 import numpy as np
 import matplotlib.pyplot as plt
