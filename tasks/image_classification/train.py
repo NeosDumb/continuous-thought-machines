@@ -468,46 +468,46 @@ if __name__=='__main__':
                         for inferi, (inputs, targets) in enumerate(loader):
                             inputs = inputs.to(device)
                             targets = targets.to(device)
-                            all_targets_list.append(targets.detach().cpu().numpy())
+                            all_targets_list.append(targets.detach())
 
                             # Model-specific forward and loss for evaluation
                             if args.model == 'ctm':
                                 these_predictions, certainties, _ = model(inputs)
                                 loss, where_most_certain = image_classification_loss(these_predictions, certainties, targets, use_most_certain=True)
-                                all_predictions_list.append(these_predictions.argmax(1).detach().cpu().numpy()) # Shape (B, T)
-                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach().cpu().numpy()) # Shape (B,)
+                                all_predictions_list.append(these_predictions.argmax(1).detach()) # Shape (B, T)
+                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach()) # Shape (B,)
 
                             elif args.model == 'lstm':
                                 these_predictions, certainties, _ = model(inputs)
                                 loss, where_most_certain = image_classification_loss(these_predictions, certainties, targets, use_most_certain=True)
-                                all_predictions_list.append(these_predictions.argmax(1).detach().cpu().numpy()) # Shape (B, T)
-                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach().cpu().numpy()) # Shape (B,)
+                                all_predictions_list.append(these_predictions.argmax(1).detach()) # Shape (B, T)
+                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach()) # Shape (B,)
 
                             elif args.model == 'ff':
                                 these_predictions = model(inputs)
                                 loss = nn.CrossEntropyLoss()(these_predictions, targets)
-                                all_predictions_list.append(these_predictions.argmax(1).detach().cpu().numpy()) # Shape (B,)
+                                all_predictions_list.append(these_predictions.argmax(1).detach()) # Shape (B,)
 
-                            all_losses.append(loss.item())
+                            all_losses.append(loss.detach())
 
                             if args.n_test_batches != -1 and inferi >= args.n_test_batches -1 : break # Check condition >= N-1
                             pbar_inner.set_description(f'Computing metrics for train (Batch {inferi+1})')
                             pbar_inner.update(1)
 
-                    all_targets = np.concatenate(all_targets_list)
-                    all_predictions = np.concatenate(all_predictions_list) # Shape (N, T) or (N,)
-                    train_losses.append(np.mean(all_losses))
+                    all_targets = torch.cat(all_targets_list)
+                    all_predictions = torch.cat(all_predictions_list) # Shape (N, T) or (N,)
+                    train_losses.append(torch.stack(all_losses).mean().item())
 
                     if args.model in ['ctm', 'lstm']:
                         # Accuracies per tick for CTM/LSTM
-                        current_train_accuracies = np.mean(all_predictions == all_targets[...,np.newaxis], axis=0) # Mean over batch dim -> Shape (T,)
+                        current_train_accuracies = (all_predictions == all_targets.unsqueeze(-1)).float().mean(dim=0).cpu().numpy() # Mean over batch dim -> Shape (T,)
                         train_accuracies.append(current_train_accuracies)
                         # Most certain accuracy
-                        all_predictions_most_certain = np.concatenate(all_predictions_most_certain_list)
-                        current_train_accuracies_most_certain = (all_targets == all_predictions_most_certain).mean()
+                        all_predictions_most_certain = torch.cat(all_predictions_most_certain_list)
+                        current_train_accuracies_most_certain = (all_targets == all_predictions_most_certain).float().mean().item()
                         train_accuracies_most_certain.append(current_train_accuracies_most_certain)
                     else: # FF
-                         current_train_accuracies = (all_targets == all_predictions).mean() # Shape scalar
+                         current_train_accuracies = (all_targets == all_predictions).float().mean().item() # Shape scalar
                          train_accuracies.append(current_train_accuracies)
                 
                 del these_predictions
@@ -527,44 +527,44 @@ if __name__=='__main__':
                        for inferi, (inputs, targets) in enumerate(loader):
                             inputs = inputs.to(device)
                             targets = targets.to(device)
-                            all_targets_list.append(targets.detach().cpu().numpy())
+                            all_targets_list.append(targets.detach())
 
                             # Model-specific forward and loss for evaluation
                             if args.model == 'ctm':
                                 these_predictions, certainties, _ = model(inputs)
                                 loss, where_most_certain = image_classification_loss(these_predictions, certainties, targets, use_most_certain=True)
-                                all_predictions_list.append(these_predictions.argmax(1).detach().cpu().numpy())
-                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach().cpu().numpy())
+                                all_predictions_list.append(these_predictions.argmax(1).detach())
+                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach())
 
                             elif args.model == 'lstm':
                                 these_predictions, certainties, _ = model(inputs)
                                 loss, where_most_certain = image_classification_loss(these_predictions, certainties, targets, use_most_certain=True)
-                                all_predictions_list.append(these_predictions.argmax(1).detach().cpu().numpy())
-                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach().cpu().numpy())
+                                all_predictions_list.append(these_predictions.argmax(1).detach())
+                                all_predictions_most_certain_list.append(these_predictions.argmax(1)[torch.arange(these_predictions.size(0), device=these_predictions.device), where_most_certain].detach())
 
                             elif args.model == 'ff':
                                 these_predictions = model(inputs)
                                 loss = nn.CrossEntropyLoss()(these_predictions, targets)
-                                all_predictions_list.append(these_predictions.argmax(1).detach().cpu().numpy())
+                                all_predictions_list.append(these_predictions.argmax(1).detach())
 
-                            all_losses.append(loss.item())
+                            all_losses.append(loss.detach())
 
                             if args.n_test_batches != -1 and inferi >= args.n_test_batches -1: break
                             pbar_inner.set_description(f'Computing metrics for test (Batch {inferi+1})')
                             pbar_inner.update(1)
 
-                    all_targets = np.concatenate(all_targets_list)
-                    all_predictions = np.concatenate(all_predictions_list)
-                    test_losses.append(np.mean(all_losses))
+                    all_targets = torch.cat(all_targets_list)
+                    all_predictions = torch.cat(all_predictions_list)
+                    test_losses.append(torch.stack(all_losses).mean().item())
 
                     if args.model in ['ctm', 'lstm']:
-                        current_test_accuracies = np.mean(all_predictions == all_targets[...,np.newaxis], axis=0)
+                        current_test_accuracies = (all_predictions == all_targets.unsqueeze(-1)).float().mean(dim=0).cpu().numpy()
                         test_accuracies.append(current_test_accuracies)
-                        all_predictions_most_certain = np.concatenate(all_predictions_most_certain_list)
-                        current_test_accuracies_most_certain = (all_targets == all_predictions_most_certain).mean()
+                        all_predictions_most_certain = torch.cat(all_predictions_most_certain_list)
+                        current_test_accuracies_most_certain = (all_targets == all_predictions_most_certain).float().mean().item()
                         test_accuracies_most_certain.append(current_test_accuracies_most_certain)
                     else: # FF
-                         current_test_accuracies = (all_targets == all_predictions).mean()
+                         current_test_accuracies = (all_targets == all_predictions).float().mean().item()
                          test_accuracies.append(current_test_accuracies)
 
                 # Plotting (conditional)
