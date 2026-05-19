@@ -218,6 +218,24 @@ if __name__=='__main__':
 
 
                         concatenated_probs = softmax(concatenated_predictions, 1)
+
+                        num_steps = concatenated_predictions.shape[-1]
+                        cum_probs = np.cumsum(concatenated_probs, axis=-1)
+                        cum_logits = np.cumsum(concatenated_predictions, axis=-1)
+                        weighted_logits = concatenated_predictions * concatenated_certainties[:, 1:, :]
+                        cum_weighted_logits = np.cumsum(weighted_logits, axis=-1)
+
+                        certainty_argmax = np.zeros((concatenated_predictions.shape[0], num_steps), dtype=int)
+                        current_max_idx = np.zeros(concatenated_predictions.shape[0], dtype=int)
+                        current_max_val = np.full(concatenated_predictions.shape[0], -np.inf)
+
+                        for stepi in range(num_steps):
+                            vals = concatenated_certainties[:, 1, stepi]
+                            update_mask = vals > current_max_val
+                            current_max_val[update_mask] = vals[update_mask]
+                            current_max_idx[update_mask] = stepi
+                            certainty_argmax[:, stepi] = current_max_idx
+
                         for topk in [1, 5]:
                             concatenated_predictions_argsorted_topk = concatenated_predictions_argsorted[:,:topk]
 
@@ -226,15 +244,15 @@ if __name__=='__main__':
                             with tqdm(total=(concatenated_predictions.shape[-1]), initial=0, leave=False, position=1, dynamic_ncols=True) as pbarinner:
                                 pbarinner.set_description('Acc types')
                                 for stepi in np.arange(concatenated_predictions.shape[-1]):
-                                    pred_avg = concatenated_probs[:,:,:stepi+1].mean(-1).argsort(1)[:,-topk:]
+                                    pred_avg = np.argpartition(cum_probs[:, :, stepi], -topk, axis=1)[:, -topk:]
                                     pred_instant = concatenated_predictions_argsorted_topk[:,:,stepi]
-                                    pred_certain = concatenated_predictions_argsorted_topk[np.arange(concatenated_predictions.shape[0]),:, concatenated_certainties[:,1,:stepi+1].argmax(1)]
-                                    pred_avg_logits = concatenated_predictions[:,:,:stepi+1].mean(-1).argsort(1)[:,-topk:]
-                                    pred_weighted_logits = (concatenated_predictions[:,:,:stepi+1] * concatenated_certainties[:,1:,:stepi+1]).sum(-1).argsort(1)[:, -topk:]
+                                    pred_certain = concatenated_predictions_argsorted_topk[np.arange(concatenated_predictions.shape[0]),:, certainty_argmax[:, stepi]]
+                                    pred_avg_logits = np.argpartition(cum_logits[:, :, stepi], -topk, axis=1)[:, -topk:]
+                                    pred_weighted_logits = np.argpartition(cum_weighted_logits[:, :, stepi], -topk, axis=1)[:, -topk:]
                                     pbarinner.update(1)
                                     accs_instant.append(np.any(pred_instant==concatenated_targets[...,np.newaxis], -1).mean())
                                     accs_avg.append(np.any(pred_avg==concatenated_targets[...,np.newaxis], -1).mean())
-                                    accs_avg_logits.append(np.any(pred_avg==concatenated_targets[...,np.newaxis], -1).mean())
+                                    accs_avg_logits.append(np.any(pred_avg_logits==concatenated_targets[...,np.newaxis], -1).mean())
                                     accs_weighted_logits.append(np.any(pred_weighted_logits==concatenated_targets[...,np.newaxis], -1).mean())
                                     accs_certain.append(np.any(pred_avg_logits==concatenated_targets[...,np.newaxis], -1).mean())
                             fig = plt.figure(figsize=(10*figscale, 4*figscale))
