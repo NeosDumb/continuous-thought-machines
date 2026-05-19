@@ -474,31 +474,31 @@ if __name__=='__main__':
                         for inferi, (inputs, targets) in enumerate(loader):
                             inputs = inputs.to(device)
                             targets = targets.to(device)
-                            all_targets_list.append(targets.detach().cpu().numpy()) # N x S
+                            all_targets_list.append(targets.detach()) # N x S
 
                             # Model-specific forward, reshape, loss for evaluation
                             if args.model == 'ctm':
                                 predictions_raw, certainties, _ = model(inputs)
                                 predictions = predictions_raw.reshape(predictions_raw.size(0), -1, 5, predictions_raw.size(-1)) # B,S,C,T
                                 loss, where_most_certain, _ = maze_loss(predictions, certainties, targets, use_most_certain=True)
-                                all_predictions_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S,C,T -> argmax class -> B,S,T
+                                all_predictions_list.append(predictions.argmax(2).detach()) # B,S,C,T -> argmax class -> B,S,T
                                 pred_at_certain = predictions.argmax(2)[torch.arange(predictions.size(0), device=predictions.device), :, where_most_certain] # B,S
-                                all_predictions_most_certain_list.append(pred_at_certain.detach().cpu().numpy())
+                                all_predictions_most_certain_list.append(pred_at_certain.detach())
 
                             elif args.model == 'lstm':
                                 predictions_raw, certainties, _ = model(inputs)
                                 predictions = predictions_raw.reshape(predictions_raw.size(0), -1, 5, predictions_raw.size(-1)) # B,S,C,T
                                 loss, where_most_certain, _ = maze_loss(predictions, certainties, targets, use_most_certain=False) # where = -1
-                                all_predictions_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S,C,T
+                                all_predictions_list.append(predictions.argmax(2).detach()) # B,S,C,T
                                 pred_at_certain = predictions.argmax(2)[torch.arange(predictions.size(0), device=predictions.device), :, where_most_certain] # B,S (at last tick)
-                                all_predictions_most_certain_list.append(pred_at_certain.detach().cpu().numpy())
+                                all_predictions_most_certain_list.append(pred_at_certain.detach())
 
                             elif args.model == 'ff':
                                 predictions_raw = model(inputs) # B, S*C
                                 predictions = predictions_raw.reshape(predictions_raw.size(0), -1, 5) # B,S,C
                                 loss, where_most_certain, _ = maze_loss(predictions.unsqueeze(-1), None, targets, use_most_certain=False) # where = -1
-                                all_predictions_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S
-                                all_predictions_most_certain_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S (same as above for FF)
+                                all_predictions_list.append(predictions.argmax(2).detach()) # B,S
+                                all_predictions_most_certain_list.append(predictions.argmax(2).detach()) # B,S (same as above for FF)
 
 
                             all_losses.append(loss.item())
@@ -507,9 +507,9 @@ if __name__=='__main__':
                             pbar_inner.set_description(f'Computing metrics for train (Batch {inferi+1})')
                             pbar_inner.update(1)
 
-                    all_targets = np.concatenate(all_targets_list) # N, S
-                    all_predictions = np.concatenate(all_predictions_list) # N, S, T or N, S
-                    all_predictions_most_certain = np.concatenate(all_predictions_most_certain_list) # N, S
+                    all_targets = torch.cat(all_targets_list).cpu().numpy() # N, S
+                    all_predictions = torch.cat(all_predictions_list).cpu().numpy() # N, S, T or N, S
+                    all_predictions_most_certain = torch.cat(all_predictions_most_certain_list).cpu().numpy() # N, S
 
                     train_losses.append(np.mean(all_losses))
                     # Calculate per step/tick accuracy averaged over batches
@@ -538,31 +538,31 @@ if __name__=='__main__':
                         for inferi, (inputs, targets) in enumerate(loader):
                             inputs = inputs.to(device)
                             targets = targets.to(device)
-                            all_targets_list.append(targets.detach().cpu().numpy())
+                            all_targets_list.append(targets.detach())
 
                              # Model-specific forward, reshape, loss for evaluation
                             if args.model == 'ctm':
                                 predictions_raw, certainties, _ = model(inputs)
                                 predictions = predictions_raw.reshape(predictions_raw.size(0), -1, 5, predictions_raw.size(-1)) # B,S,C,T
                                 loss, where_most_certain, _ = maze_loss(predictions, certainties, targets, use_most_certain=True)
-                                all_predictions_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S,T
+                                all_predictions_list.append(predictions.argmax(2).detach()) # B,S,T
                                 pred_at_certain = predictions.argmax(2)[torch.arange(predictions.size(0), device=predictions.device), :, where_most_certain] # B,S
-                                all_predictions_most_certain_list.append(pred_at_certain.detach().cpu().numpy())
+                                all_predictions_most_certain_list.append(pred_at_certain.detach())
 
                             elif args.model == 'lstm':
                                 predictions_raw, certainties, _ = model(inputs)
                                 predictions = predictions_raw.reshape(predictions_raw.size(0), -1, 5, predictions_raw.size(-1)) # B,S,C,T
                                 loss, where_most_certain, _ = maze_loss(predictions, certainties, targets, use_most_certain=False) # where = -1
-                                all_predictions_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S,T
+                                all_predictions_list.append(predictions.argmax(2).detach()) # B,S,T
                                 pred_at_certain = predictions.argmax(2)[torch.arange(predictions.size(0), device=predictions.device), :, where_most_certain] # B,S (at last tick)
-                                all_predictions_most_certain_list.append(pred_at_certain.detach().cpu().numpy())
+                                all_predictions_most_certain_list.append(pred_at_certain.detach())
 
                             elif args.model == 'ff':
                                 predictions_raw = model(inputs) # B, S*C
                                 predictions = predictions_raw.reshape(predictions_raw.size(0), -1, 5) # B,S,C
                                 loss, where_most_certain, _ = maze_loss(predictions.unsqueeze(-1), None, targets, use_most_certain=False) # where = -1
-                                all_predictions_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S
-                                all_predictions_most_certain_list.append(predictions.argmax(2).detach().cpu().numpy()) # B,S (same as above for FF)
+                                all_predictions_list.append(predictions.argmax(2).detach()) # B,S
+                                all_predictions_most_certain_list.append(predictions.argmax(2).detach()) # B,S (same as above for FF)
 
 
                             all_losses.append(loss.item())
@@ -571,9 +571,9 @@ if __name__=='__main__':
                             pbar_inner.set_description(f'Computing metrics for test (Batch {inferi+1})')
                             pbar_inner.update(1)
 
-                    all_targets = np.concatenate(all_targets_list)
-                    all_predictions = np.concatenate(all_predictions_list)
-                    all_predictions_most_certain = np.concatenate(all_predictions_most_certain_list)
+                    all_targets = torch.cat(all_targets_list).cpu().numpy()
+                    all_predictions = torch.cat(all_predictions_list).cpu().numpy()
+                    all_predictions_most_certain = torch.cat(all_predictions_most_certain_list).cpu().numpy()
 
                     test_losses.append(np.mean(all_losses))
                     # Calculate per step/tick accuracy
