@@ -55,7 +55,11 @@ def test_minigrid_backbone_shape():
     model = MiniGridBackbone(d_input, grid_size=grid_size)
 
     # Input: (B, H, W, C) where C=3 (object, color, state)
-    x = torch.randint(0, 5, (batch_size, grid_size, grid_size, 3))
+    # The maximum value for state is 2, since num_states=3
+    x = torch.zeros(batch_size, grid_size, grid_size, 3, dtype=torch.long)
+    x[:,:,:,0] = torch.randint(0, 11, (batch_size, grid_size, grid_size))
+    x[:,:,:,1] = torch.randint(0, 6, (batch_size, grid_size, grid_size))
+    x[:,:,:,2] = torch.randint(0, 3, (batch_size, grid_size, grid_size))
 
     output = model(x)
 

@@ -97,29 +97,6 @@ class ContinuousThoughtMachineRL(ContinuousThoughtMachine):
         """Get the positional embedding module."""
         return None
 
-
-    def get_synapses(self, synapse_depth, d_model, dropout, synapse_min_width):
-        """
-        Get the synapse module.
-
-        We found in our early experimentation that a single Linear, GLU and LayerNorm block performed worse than two blocks. 
-        For that reason we set the default synapse depth to two blocks. 
-        
-        TODO: This is legacy and needs further experimentation to iron out.        
-        """
-        if synapse_depth == 1:
-            return nn.Sequential(
-                nn.Dropout(dropout),
-                nn.LazyLinear(d_model*2),
-                nn.GLU(),
-                nn.LayerNorm(d_model),
-                nn.LazyLinear(d_model*2),
-                nn.GLU(),
-                nn.LayerNorm(d_model)
-            )
-        else:
-            return SynapseUNET(d_model, synapse_depth, synapse_min_width, dropout)
-
     def set_synchronisation_parameters(self, synch_type: str, n_synch: int, n_random_pairing_self: int = 0):
         """Set the parameters for the synchronisation of neurons."""
         if synch_type == 'action':

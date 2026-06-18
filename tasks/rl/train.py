@@ -202,10 +202,11 @@ class Agent(nn.Module):
     def _get_ctm_hidden_states(self, ctm_state, done, num_envs):
         initial_state_trace, initial_activated_state_trace = self.get_initial_ctm_state(num_envs)
         if self.continious_state_trace:
-            masked_previous_state_trace = (1.0 - done).view(-1, 1, 1) * ctm_state[0]
-            masked_previous_activated_state_trace = (1.0 - done).view(-1, 1, 1) * ctm_state[1]
-            masked_initial_state_trace = done.view(-1, 1, 1) * initial_state_trace
-            masked_initial_activated_state_trace = done.view(-1, 1, 1) * initial_activated_state_trace
+            done_float = done.float()
+            masked_previous_state_trace = (1.0 - done_float).view(-1, 1, 1) * ctm_state[0]
+            masked_previous_activated_state_trace = (1.0 - done_float).view(-1, 1, 1) * ctm_state[1]
+            masked_initial_state_trace = done_float.view(-1, 1, 1) * initial_state_trace
+            masked_initial_activated_state_trace = done_float.view(-1, 1, 1) * initial_activated_state_trace
             return (masked_previous_state_trace + masked_initial_state_trace), (masked_previous_activated_state_trace + masked_initial_activated_state_trace)
         else:
             return (initial_state_trace, initial_activated_state_trace)
