@@ -6,6 +6,7 @@ import torch
 import os
 import zipfile
 import glob
+import tempfile
 
 def zip_python_code(output_filename):
     """
@@ -16,6 +17,19 @@ def zip_python_code(output_filename):
         output_filename: The name of the output zip file. 
                          Defaults to "python_code_backup.zip".
     """
+    current_dir = os.path.abspath(os.getcwd())
+    tmp_dir = os.path.realpath(tempfile.gettempdir())
+
+    # Resolve the final absolute path
+    real_resolved = os.path.realpath(output_filename)
+
+    # Check if the path safely resides within the current working directory or the temp directory
+    is_in_current = os.path.commonpath([current_dir, real_resolved]) == current_dir
+    is_in_tmp = os.path.commonpath([tmp_dir, real_resolved]) == tmp_dir
+    is_in_tmp_root = os.path.commonpath(['/tmp', real_resolved]) == '/tmp'
+
+    if not (is_in_current or is_in_tmp or is_in_tmp_root):
+        raise ValueError("Output filename resolves outside of the allowed safe directories (current working directory or temp directory).")
 
     with zipfile.ZipFile(output_filename, 'w') as zipf:
         files = glob.glob('models/**/*.py', recursive=True) + glob.glob('utils/**/*.py', recursive=True) + glob.glob('tasks/**/*.py', recursive=True) + glob.glob('*.py', recursive=True)
