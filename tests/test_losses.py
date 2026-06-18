@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pytest
-from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss
+from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss, parity_loss
 
 def test_compute_ctc_loss_basic():
     """Test basic functionality of compute_ctc_loss with standard inputs."""
