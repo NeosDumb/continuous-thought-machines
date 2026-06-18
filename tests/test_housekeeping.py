@@ -7,6 +7,16 @@ import pytest
 
 from utils.housekeeping import zip_python_code, set_seed
 
+def test_zip_python_code_traversal():
+    """Test that zip_python_code prevents directory traversal characters."""
+    error_msg = "Output filename resolves outside of the allowed safe directories"
+    with pytest.raises(ValueError, match=error_msg):
+        zip_python_code("../hacked_backup.zip")
+    with pytest.raises(ValueError, match=error_msg):
+        zip_python_code("../../hacked_backup.zip")
+    with pytest.raises(ValueError, match=error_msg):
+        zip_python_code("/etc/passwd.zip")
+
 def test_zip_python_code(tmp_path):
     """Test that zip_python_code creates a zip file with expected .py files."""
     output_zip = tmp_path / "test_backup.zip"
