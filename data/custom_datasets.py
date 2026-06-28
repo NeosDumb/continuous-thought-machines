@@ -61,27 +61,32 @@ class QAMNISTDataset(Dataset):
 
     def _get_target_and_question(self, targets):
         question = []
-        equations = []
         num_digits = self.current_num_digits
         num_operations = self.current_num_operations
 
+        # Pre-generate all random indices to avoid calling np.random.randint in the loop
+        operator_indices = np.random.randint(len(self.operators), size=num_operations)
+        selection_indices = np.random.randint(num_digits, size=num_operations + 1)
+
         # Select the initial digit
-        selection_idx = np.random.randint(num_digits)
+        selection_idx = selection_indices[0]
         first_digit = targets[selection_idx]
         question.extend([selection_idx] * self.num_repeats_per_input)
         # Set current_value to the initial digit (mod is applied in each operation)
         current_value = first_digit % self.modulo_base
 
+        equation_data = []
+
         # For each operation, build an equation line
-        for _ in range(num_operations):
+        for i in range(num_operations):
             # Choose the operator ('+' or '-')
-            operator_idx = np.random.randint(len(self.operators))
+            operator_idx = operator_indices[i]
             operator = self.operators[operator_idx]
             encoded_operator = -(operator_idx + 1)  # -1 for '+', -2 for '-'
             question.extend([encoded_operator] * self.num_repeats_per_input)
             
             # Choose the next digit
-            selection_idx = np.random.randint(num_digits)
+            selection_idx = selection_indices[i + 1]
             digit = targets[selection_idx]
             question.extend([selection_idx] * self.num_repeats_per_input)
             
@@ -91,13 +96,17 @@ class QAMNISTDataset(Dataset):
             else:  # operator is '-'
                 new_value = (current_value - digit) % self.modulo_base
             
-            # Build the equation string for this step
-            equations.append(f"({current_value} {operator} {digit}) mod {self.modulo_base} = {new_value}")
+            # Save data for the equation string
+            equation_data.append((current_value, operator, digit, new_value))
             # Update current value for the next operation
             current_value = new_value
 
         target = current_value
-        question_readable = "\n".join(equations)
+        # Build the equation strings outside the tight loop
+        question_readable = "\n".join([
+            f"({cv} {op} {d}) mod {self.modulo_base} = {nv}"
+            for cv, op, d, nv in equation_data
+        ])
         return target, question, question_readable
 
     def __len__(self):
