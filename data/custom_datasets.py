@@ -104,11 +104,9 @@ class QAMNISTDataset(Dataset):
         return len(self.base_dataset)
 
     def __getitem__(self, idx):
-        images, targets = [],[]
-        for _ in range(self.current_num_digits):
-            image, target = self.base_dataset[np.random.randint(self.__len__())]
-            images.append(image)
-            targets.append(target)
+        indices = np.random.randint(0, self.__len__(), size=self.current_num_digits)
+        items = [self.base_dataset[i] for i in indices]
+        images, targets = zip(*items)
 
         observations = torch.repeat_interleave(torch.stack(images, 0), repeats=self.num_repeats_per_input, dim=0)
         target, question, question_readable = self._get_target_and_question(targets)
