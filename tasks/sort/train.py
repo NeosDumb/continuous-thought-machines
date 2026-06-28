@@ -367,7 +367,9 @@ if __name__=='__main__':
                                 all_targets.append(targets.detach().cpu().numpy())
 
                                 decoded = [d[:targets.shape[1]] for d in decode_predictions(these_predictions, predictions.shape[1]-1)]
-                                decoded = torch.stack([torch.concatenate((d, torch.zeros(targets.shape[1] - len(d), device=targets.device)+targets.shape[1])) if len(d) < targets.shape[1] else d for d in decoded], 0)
+                                decoded = torch.nn.utils.rnn.pad_sequence(decoded, batch_first=True, padding_value=targets.shape[1])
+                                if decoded.shape[1] < targets.shape[1]:
+                                    decoded = torch.nn.functional.pad(decoded, (0, targets.shape[1] - decoded.shape[1]), value=targets.shape[1])
 
                                 all_predictions.append(decoded.detach().cpu().numpy())
                                 
@@ -401,7 +403,9 @@ if __name__=='__main__':
                                 all_targets.append(targets.detach().cpu().numpy())
 
                                 decoded = [d[:targets.shape[1]] for d in decode_predictions(these_predictions, predictions.shape[1]-1)]
-                                decoded = torch.stack([torch.concatenate((d, torch.zeros(targets.shape[1] - len(d), device=targets.device)+targets.shape[1])) if len(d) < targets.shape[1] else d for d in decoded], 0)
+                                decoded = torch.nn.utils.rnn.pad_sequence(decoded, batch_first=True, padding_value=targets.shape[1])
+                                if decoded.shape[1] < targets.shape[1]:
+                                    decoded = torch.nn.functional.pad(decoded, (0, targets.shape[1] - decoded.shape[1]), value=targets.shape[1])
 
                                 all_predictions.append(decoded.detach().cpu().numpy())
                                 
