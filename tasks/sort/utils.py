@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F
+
 
 def decode_predictions(predictions, blank_label=0, return_wait_times=False):
     """
@@ -16,17 +16,21 @@ def decode_predictions(predictions, blank_label=0, return_wait_times=False):
     batch_size, num_classes, prediction_length = predictions.shape
     decoded_sequences = []
     wait_times_all = []
-    probs = F.softmax(predictions, dim=1)  # Probabilities
+
+    best_paths = torch.argmax(predictions, dim=1).tolist()
+
     for b in range(batch_size):
-        best_path = torch.argmax(probs[b], dim=0)  # Best path indices
+        best_path = best_paths[b]
         decoded = []
         wait_times = []
-        
+
         prev_char = -1  # Keep track of the previous character
         wait_time_now = 0
         for t in range(prediction_length):
-            char_idx = best_path[t].item()  # Get index as integer
-            if char_idx != blank_label and char_idx != prev_char:  # Skip blanks and duplicates
+            char_idx = best_path[t]
+            if (
+                char_idx != blank_label and char_idx != prev_char
+            ):  # Skip blanks and duplicates
                 decoded.append(char_idx)
                 prev_char = char_idx  # Update previous character
                 wait_times.append(wait_time_now)
@@ -34,11 +38,14 @@ def decode_predictions(predictions, blank_label=0, return_wait_times=False):
             else:
                 wait_time_now += 1
         decoded_sequences.append(torch.tensor(decoded, device=predictions.device))
-        if return_wait_times: wait_times_all.append(torch.tensor(wait_times, device=predictions.device))
+        if return_wait_times:
+            wait_times_all.append(torch.tensor(wait_times, device=predictions.device))
 
-    if return_wait_times: return decoded_sequences, wait_times_all
+    if return_wait_times:
+        return decoded_sequences, wait_times_all
 
     return decoded_sequences
+
 
 def compute_ctc_accuracy(predictions, targets, blank_label=0):
     """
