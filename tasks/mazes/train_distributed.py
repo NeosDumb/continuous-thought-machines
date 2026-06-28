@@ -1220,10 +1220,19 @@ if __name__ == "__main__":
 
             # Extract stats from loss outputs
             if torch.is_tensor(where_most_certain):
-                where_most_certain_val = where_most_certain.float().mean().item()
-                where_most_certain_std = where_most_certain.float().std().item()
-                where_most_certain_min = where_most_certain.min().item()
-                where_most_certain_max = where_most_certain.max().item()
+                wmc_float = where_most_certain.float()
+                stats = torch.stack(
+                    [
+                        wmc_float.mean(),
+                        wmc_float.std(),
+                        where_most_certain.min().float(),
+                        where_most_certain.max().float(),
+                    ]
+                ).tolist()
+                where_most_certain_val = stats[0]
+                where_most_certain_std = stats[1]
+                where_most_certain_min = stats[2]
+                where_most_certain_max = stats[3]
             elif isinstance(where_most_certain, int):
                 where_most_certain_val = float(where_most_certain)
                 where_most_certain_min = where_most_certain
