@@ -906,7 +906,7 @@ if __name__ == "__main__":
                                     predictions.argmax(2).detach()
                                 )  # B,S (same as above for FF)
 
-                            all_losses.append(loss.item())
+                            all_losses.append(loss.detach())
 
                             if (
                                 args.n_test_batches != -1
@@ -926,7 +926,7 @@ if __name__ == "__main__":
                         torch.cat(all_predictions_most_certain_list).cpu().numpy()
                     )  # N, S
 
-                    train_losses.append(np.mean(all_losses))
+                    train_losses.append(torch.stack(all_losses).mean().item())
                     # Calculate per step/tick accuracy averaged over batches
                     if args.model in CTM_LSTM_MODELS:
                         # all_predictions shape (N, S, T), all_targets shape (N, S) -> compare targets to each tick prediction
@@ -1053,7 +1053,7 @@ if __name__ == "__main__":
                                     predictions.argmax(2).detach()
                                 )  # B,S (same as above for FF)
 
-                            all_losses.append(loss.item())
+                            all_losses.append(loss.detach())
 
                             if (
                                 args.n_test_batches != -1
@@ -1071,7 +1071,7 @@ if __name__ == "__main__":
                         torch.cat(all_predictions_most_certain_list).cpu().numpy()
                     )
 
-                    test_losses.append(np.mean(all_losses))
+                    test_losses.append(torch.stack(all_losses).mean().item())
                     # Calculate per step/tick accuracy
                     if args.model in CTM_LSTM_MODELS:
                         test_accuracies.append(
