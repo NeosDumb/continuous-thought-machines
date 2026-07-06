@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pytest
-from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss, parity_loss
+from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss, parity_loss, qamnist_loss
 
 def test_compute_ctc_loss_basic():
     """Test basic functionality of compute_ctc_loss with standard inputs."""
@@ -242,6 +242,77 @@ def test_image_classification_loss_logic():
     # Both minimum CE losses are close to 0
     # Certainties will also pick tick 0 for B=0, tick 1 for B=1
     # Both selected losses are close to 0
+    assert loss.item() < 0.01
+
+    assert loss_index_2[0].item() == 0
+    assert loss_index_2[1].item() == 1
+
+
+def test_qamnist_loss_basic():
+    """Test basic functionality of qamnist_loss."""
+    batch_size = 4
+    num_classes = 10
+    internal_ticks = 5
+
+    predictions = torch.randn(batch_size, num_classes, internal_ticks)
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    certainties = certainties / certainties.sum(dim=1, keepdim=True)
+    targets = torch.randint(0, num_classes, (batch_size,))
+
+    loss, loss_index_2 = qamnist_loss(predictions, certainties, targets, use_most_certain=True)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0  # Scalar tensor
+    assert not torch.isnan(loss)
+    assert loss_index_2.shape == (batch_size,)
+    assert (loss_index_2 >= 0).all() and (loss_index_2 < internal_ticks).all()
+
+
+def test_qamnist_loss_use_most_certain_false():
+    """Test functionality when use_most_certain is False."""
+    batch_size = 4
+    num_classes = 10
+    internal_ticks = 5
+
+    predictions = torch.randn(batch_size, num_classes, internal_ticks)
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    targets = torch.randint(0, num_classes, (batch_size,))
+
+    loss, loss_index_2 = qamnist_loss(predictions, certainties, targets, use_most_certain=False)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0
+    assert not torch.isnan(loss)
+    assert loss_index_2.shape == (batch_size,)
+    assert (loss_index_2 == -1).all()
+
+
+def test_qamnist_loss_logic():
+    """Test the logic of qamnist_loss manually."""
+    batch_size = 2
+    num_classes = 3
+    internal_ticks = 2
+
+    # Predictions: [B, C, ticks]
+    predictions = torch.zeros(batch_size, num_classes, internal_ticks)
+    # Target 0: B=0, tick 0 -> C=[10, 0, 0] (low loss)
+    predictions[0, 0, 0] = 10.0
+    predictions[0, 1, 1] = 10.0
+    # Target 1: B=1, tick 1 -> C=[0, 10, 0] (low loss)
+    predictions[1, 0, 0] = 10.0
+    predictions[1, 1, 1] = 10.0
+
+    targets = torch.tensor([0, 1])
+
+    # Certainties: [B, 2, ticks]
+    certainties = torch.zeros(batch_size, 2, internal_ticks)
+    certainties[0, 1, 0] = 0.9
+    certainties[0, 1, 1] = 0.1
+    certainties[1, 1, 0] = 0.1
+    certainties[1, 1, 1] = 0.9
+
+    loss, loss_index_2 = qamnist_loss(predictions, certainties, targets, use_most_certain=True)
+
     assert loss.item() < 0.01
 
     assert loss_index_2[0].item() == 0
