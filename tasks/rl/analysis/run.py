@@ -298,9 +298,9 @@ def create_episode_length_csv_and_activation_plots(save_dir, args):
                         for environment_step in range(model_args.max_environment_steps):
                             with torch.no_grad():
                                 action, _, _, value, eval_state, tracking_data, action_logits, action_probs = agent.get_action_and_value(
-                                    torch.Tensor(eval_next_obs).to(device).unsqueeze(0),
+                                    torch.tensor(eval_next_obs, device=device, dtype=torch.float32).unsqueeze(0),
                                     eval_state,
-                                    torch.Tensor([eval_next_done]).to(device),
+                                    torch.tensor([eval_next_done], device=device, dtype=torch.float32),
                                     track=True
                                 )
                             eval_next_obs, reward, termination, truncation, _ = eval_env.step(action.cpu().numpy()[0])
