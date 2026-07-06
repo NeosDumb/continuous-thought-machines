@@ -199,9 +199,9 @@ if __name__=='__main__':
                         plot_neural_dynamics(post_activations_viz, 15*10, args.output_dir, axis_snap=True, N_per_row=15)
                     predictions, certainties, synchronisation = model(inputs)
 
-                    tracked_predictions.append(predictions.detach().cpu().numpy())
-                    tracked_targets.append(targets.detach().cpu().numpy())
-                    tracked_certainties.append(certainties.detach().cpu().numpy())
+                    tracked_predictions.append(predictions.detach())
+                    tracked_targets.append(targets.detach())
+                    tracked_certainties.append(certainties.detach())
 
                     
 
@@ -210,9 +210,9 @@ if __name__=='__main__':
                     pbar.update(1)
                     if ((bi % args.plot_every == 0) or bi == len(loader)-1) and bi!=0: #
 
-                        concatenated_certainties = np.concatenate(tracked_certainties, axis=0)
-                        concatenated_targets = np.concatenate(tracked_targets, axis=0)
-                        concatenated_predictions = np.concatenate(tracked_predictions, axis=0)
+                        concatenated_certainties = torch.cat(tracked_certainties, dim=0).cpu().numpy()
+                        concatenated_targets = torch.cat(tracked_targets, dim=0).cpu().numpy()
+                        concatenated_predictions = torch.cat(tracked_predictions, dim=0).cpu().numpy()
                         concatenated_predictions_argsorted = np.argsort(concatenated_predictions, 1)[:,::-1]
 
 

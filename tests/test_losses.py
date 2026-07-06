@@ -2,7 +2,86 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pytest
-from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss, parity_loss, qamnist_loss
+import numpy as np
+from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss, parity_loss, maze_loss
+
+def test_maze_loss_basic():
+    """Test basic functionality of maze_loss with standard inputs."""
+    batch_size = 2
+    route_length = 5
+    num_classes = 5
+    internal_ticks = 4
+
+    # Predictions: [B, route_length, class, internal_ticks]
+    predictions = torch.randn(batch_size, route_length, num_classes, internal_ticks)
+
+    # Certainties: [B, 2, internal_ticks]
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    certainties[:, 0, :] = 1.0 - certainties[:, 1, :]
+
+    # Targets: [B, route_length]
+    targets = torch.randint(0, num_classes, (batch_size, route_length))
+
+    # Test use_most_certain=True
+    loss, loss_index_2, upto_where = maze_loss(predictions, certainties, targets, use_most_certain=True)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0
+    assert not torch.isnan(loss)
+    assert not torch.isinf(loss)
+
+    assert isinstance(loss_index_2, torch.Tensor)
+    assert loss_index_2.shape == (batch_size,)
+    assert loss_index_2.dtype == torch.long
+
+    assert type(upto_where).__name__ in ['ndarray', 'RealMockArray']
+    assert upto_where.shape == (batch_size,)
+
+def test_maze_loss_use_most_certain_false():
+    """Test maze_loss when use_most_certain=False."""
+    batch_size = 3
+    route_length = 4
+    num_classes = 5
+    internal_ticks = 6
+
+    predictions = torch.randn(batch_size, route_length, num_classes, internal_ticks)
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+    targets = torch.randint(0, num_classes, (batch_size, route_length))
+
+    loss, loss_index_2, upto_where = maze_loss(predictions, certainties, targets, use_most_certain=False)
+
+    assert isinstance(loss, torch.Tensor)
+    assert loss.dim() == 0
+
+    # When use_most_certain=False, loss_index_2 should be all -1
+    assert torch.all(loss_index_2 == -1)
+    assert not torch.isnan(loss)
+
+def test_maze_loss_auto_curriculum_logic():
+    """Test the logic for auto-curriculum and upto_where."""
+    batch_size = 2
+    route_length = 10
+    num_classes = 5
+    internal_ticks = 1
+
+    predictions = torch.randn(batch_size, route_length, num_classes, internal_ticks)
+    targets = torch.randint(0, num_classes, (batch_size, route_length))
+    certainties = torch.rand(batch_size, 2, internal_ticks)
+
+    # For batch 0, let's make the first 3 predictions correct
+    targets[0, 0:3] = predictions[0, 0:3, :, 0].argmax(dim=1)
+    targets[0, 3] = (predictions[0, 3, :, 0].argmax(dim=0) + 1) % num_classes
+
+    # For batch 1, let's make 0 predictions correct
+    targets[1, 0] = (predictions[1, 0, :, 0].argmax(dim=0) + 1) % num_classes
+
+    cirriculum_lookahead = 3
+    loss, loss_index_2, upto_where = maze_loss(predictions, certainties, targets, cirriculum_lookahead=cirriculum_lookahead)
+
+    # batch 0 is correct up to index 2 (length 3), so upto_where = 2 + lookahead
+    assert upto_where[0] == 2 + cirriculum_lookahead
+    # batch 1 is correct up to index -1 (length 0, handled as index 0 prefix length), so upto_where = 0 + lookahead
+    assert upto_where[1] == 0 + cirriculum_lookahead
 
 def test_compute_ctc_loss_basic():
     """Test basic functionality of compute_ctc_loss with standard inputs."""
