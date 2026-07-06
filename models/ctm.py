@@ -217,7 +217,7 @@ class ContinuousThoughtMachine(nn.Module, PyTorchModelHubMixin):
         are only updated recurrently at each step, meaning that there is a linear recurrence we can
         leverage. 
         
-        See Appendix TODO of the Technical Report (TODO:LINK) for the maths that enables this method.
+        See Appendix K of the Technical Report (https://arxiv.org/abs/2505.05522) for the maths that enables this method.
         """
 
         if synch_type == 'action': # Get action parameters
