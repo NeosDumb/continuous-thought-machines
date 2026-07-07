@@ -407,7 +407,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
     next_obs, _ = envs.reset(seed=args.seed)
-    next_obs = torch.tensor(next_obs, device=device)
+    next_obs = torch.tensor(next_obs, dtype=torch.float32, device=device)
     next_done = torch.zeros(args.num_envs, device=device)
     next_state = agent.get_initial_state(args.num_envs)
 
@@ -422,7 +422,6 @@ if __name__ == "__main__":
             optimizer.param_groups[0]["lr"] = lrnow
 
         for step in range(0, args.num_steps):
-            next_obs = torch.tensor(next_obs, device=device)
             global_step += args.num_envs
             obs[step] = next_obs
             dones[step] = next_done
