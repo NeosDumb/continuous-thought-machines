@@ -154,8 +154,8 @@ class ContinuousThoughtMachineRL(ContinuousThoughtMachine):
 
             # --- Tracking ---
             if track:
-                pre_activations_tracking.append(state_trace[:,:,-1].detach().cpu().numpy())
-                post_activations_tracking.append(activated_state.detach().cpu().numpy())
+                pre_activations_tracking.append(state_trace[:,:,-1].detach())
+                post_activations_tracking.append(activated_state.detach())
 
         hidden_states = (
             state_trace,
@@ -167,5 +167,5 @@ class ContinuousThoughtMachineRL(ContinuousThoughtMachine):
 
         # --- Return Values ---
         if track:
-            return synchronisation_out, hidden_states, np.array(pre_activations_tracking), np.array(post_activations_tracking)
+            return synchronisation_out, hidden_states, torch.stack(pre_activations_tracking).cpu().numpy() if pre_activations_tracking else np.array(pre_activations_tracking), torch.stack(post_activations_tracking).cpu().numpy() if post_activations_tracking else np.array(post_activations_tracking)
         return synchronisation_out, hidden_states
