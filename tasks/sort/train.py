@@ -364,21 +364,21 @@ if __name__=='__main__':
                                 loss = sort_loss(these_predictions, targets)
                                 all_losses.append(loss.item())
 
-                                all_targets.append(targets.detach().cpu().numpy())
+                                all_targets.append(targets.detach())
 
                                 decoded = [d[:targets.shape[1]] for d in decode_predictions(these_predictions, predictions.shape[1]-1)]
                                 decoded = torch.nn.utils.rnn.pad_sequence(decoded, batch_first=True, padding_value=targets.shape[1])
                                 if decoded.shape[1] < targets.shape[1]:
                                     decoded = torch.nn.functional.pad(decoded, (0, targets.shape[1] - decoded.shape[1]), value=targets.shape[1])
 
-                                all_predictions.append(decoded.detach().cpu().numpy())
+                                all_predictions.append(decoded.detach())
                                 
                                 if args.n_test_batches!=-1 and inferi%args.n_test_batches==0 and inferi!=0 : break
                                 pbar_inner.set_description('Computing metrics for train')
                                 pbar_inner.update(1)
 
-                        all_predictions = np.concatenate(all_predictions)
-                        all_targets = np.concatenate(all_targets)
+                        all_predictions = torch.cat(all_predictions).cpu().numpy()
+                        all_targets = torch.cat(all_targets).cpu().numpy()
 
 
                         train_accuracies.append((all_predictions==all_targets).mean())
@@ -400,21 +400,21 @@ if __name__=='__main__':
                                 loss = sort_loss(these_predictions, targets)
                                 all_losses.append(loss.item())
 
-                                all_targets.append(targets.detach().cpu().numpy())
+                                all_targets.append(targets.detach())
 
                                 decoded = [d[:targets.shape[1]] for d in decode_predictions(these_predictions, predictions.shape[1]-1)]
                                 decoded = torch.nn.utils.rnn.pad_sequence(decoded, batch_first=True, padding_value=targets.shape[1])
                                 if decoded.shape[1] < targets.shape[1]:
                                     decoded = torch.nn.functional.pad(decoded, (0, targets.shape[1] - decoded.shape[1]), value=targets.shape[1])
 
-                                all_predictions.append(decoded.detach().cpu().numpy())
+                                all_predictions.append(decoded.detach())
                                 
                                 if args.n_test_batches!=-1 and inferi%args.n_test_batches==0 and inferi!=0 : break
                                 pbar_inner.set_description('Computing metrics for train')
                                 pbar_inner.update(1)
 
-                        all_predictions = np.concatenate(all_predictions)
-                        all_targets = np.concatenate(all_targets)
+                        all_predictions = torch.cat(all_predictions).cpu().numpy()
+                        all_targets = torch.cat(all_targets).cpu().numpy()
 
 
                         test_accuracies.append((all_predictions==all_targets).mean())
