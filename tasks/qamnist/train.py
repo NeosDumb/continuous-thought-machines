@@ -337,18 +337,18 @@ if __name__=='__main__':
                                 loss, where_most_certain = qamnist_loss(these_predictions_answer_steps, certainties_answer_steps, targets, use_most_certain=args.use_most_certain)
                                 all_losses.append(loss.item())
 
-                                all_targets.append(targets.detach().cpu().numpy())
+                                all_targets.append(targets.detach())
 
-                                all_predictions_most_certain.append(these_predictions_answer_steps.argmax(1)[torch.arange(these_predictions_answer_steps.size(0), device=these_predictions.device), where_most_certain].detach().cpu().numpy())
-                                all_predictions.append(these_predictions_answer_steps.argmax(1).detach().cpu().numpy())
+                                all_predictions_most_certain.append(these_predictions_answer_steps.argmax(1)[torch.arange(these_predictions_answer_steps.size(0), device=these_predictions.device), where_most_certain].detach())
+                                all_predictions.append(these_predictions_answer_steps.argmax(1).detach())
                                 
                                 if args.n_test_batches!=-1 and inferi%args.n_test_batches==0 and inferi!=0 : break
                                 pbar_inner.set_description('Computing metrics for train')
                                 pbar_inner.update(1)
 
-                        all_predictions = np.concatenate(all_predictions)
-                        all_targets = np.concatenate(all_targets)
-                        all_predictions_most_certain = np.concatenate(all_predictions_most_certain)
+                        all_predictions = torch.cat(all_predictions).cpu().numpy()
+                        all_targets = torch.cat(all_targets).cpu().numpy()
+                        all_predictions_most_certain = torch.cat(all_predictions_most_certain).cpu().numpy()
 
 
                         train_accuracies.append(np.mean(all_predictions == all_targets[...,np.newaxis], axis=tuple(range(all_predictions.ndim-1))))
@@ -375,18 +375,18 @@ if __name__=='__main__':
                                 loss, where_most_certain = qamnist_loss(these_predictions_answer_steps, certainties_answer_steps, targets, use_most_certain=args.use_most_certain)
                                 all_losses.append(loss.item())
 
-                                all_targets.append(targets.detach().cpu().numpy())
+                                all_targets.append(targets.detach())
 
-                                all_predictions_most_certain.append(these_predictions_answer_steps.argmax(1)[torch.arange(these_predictions_answer_steps.size(0), device=these_predictions_answer_steps.device), where_most_certain].detach().cpu().numpy())
-                                all_predictions.append(these_predictions.argmax(1).detach().cpu().numpy())
+                                all_predictions_most_certain.append(these_predictions_answer_steps.argmax(1)[torch.arange(these_predictions_answer_steps.size(0), device=these_predictions_answer_steps.device), where_most_certain].detach())
+                                all_predictions.append(these_predictions.argmax(1).detach())
                                 
                                 if args.n_test_batches!=-1 and inferi%args.n_test_batches==0 and inferi!=0: break
                                 pbar_inner.set_description('Computing metrics for test')
                                 pbar_inner.update(1)
 
-                        all_predictions = np.concatenate(all_predictions)
-                        all_targets = np.concatenate(all_targets)
-                        all_predictions_most_certain = np.concatenate(all_predictions_most_certain)
+                        all_predictions = torch.cat(all_predictions).cpu().numpy()
+                        all_targets = torch.cat(all_targets).cpu().numpy()
+                        all_predictions_most_certain = torch.cat(all_predictions_most_certain).cpu().numpy()
                         
                         test_accuracies.append(np.mean(all_predictions == all_targets[...,np.newaxis], axis=tuple(range(all_predictions.ndim-1))))
                         test_accuracies_most_certain.append((all_targets == all_predictions_most_certain).mean())
