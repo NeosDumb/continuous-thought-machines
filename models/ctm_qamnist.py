@@ -196,14 +196,14 @@ class ContinuousThoughtMachineQAMNIST(ContinuousThoughtMachine):
 
             # --- Tracking ---
             if track:
-                pre_activations_tracking.append(state_trace[:,:,-1].detach().cpu().numpy())
-                post_activations_tracking.append(activated_state.detach().cpu().numpy())
+                pre_activations_tracking.append(state_trace[:,:,-1].detach())
+                post_activations_tracking.append(activated_state.detach())
                 if attn_weights is not None:
-                    attention_tracking.append(attn_weights.detach().cpu().numpy())
+                    attention_tracking.append(attn_weights.detach())
                 if is_question_step:
-                    embedding_tracking.append(kv.detach().cpu().numpy())
+                    embedding_tracking.append(kv.detach())
 
         # --- Return Values ---
         if track:
-            return predictions, certainties, synchronization_out, np.array(pre_activations_tracking), np.array(post_activations_tracking), np.array(attention_tracking), np.array(embedding_tracking)
+            return predictions, certainties, synchronization_out, torch.stack(pre_activations_tracking).cpu().numpy() if pre_activations_tracking else np.array(pre_activations_tracking), torch.stack(post_activations_tracking).cpu().numpy() if post_activations_tracking else np.array(post_activations_tracking), torch.stack(attention_tracking).cpu().numpy() if attention_tracking else np.array(attention_tracking), torch.stack(embedding_tracking).cpu().numpy() if embedding_tracking else np.array(embedding_tracking)
         return predictions, certainties, synchronization_out

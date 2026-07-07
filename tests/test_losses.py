@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytest
 import numpy as np
-from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss, parity_loss, maze_loss
+from utils.losses import compute_ctc_loss, sort_loss, image_classification_loss, parity_loss, maze_loss, qamnist_loss
 
 def test_maze_loss_basic():
     """Test basic functionality of maze_loss with standard inputs."""

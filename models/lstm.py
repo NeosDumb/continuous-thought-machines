@@ -235,10 +235,12 @@ class LSTMBaseline(nn.Module):
 
             # --- Tracking ---
             if track:
-                activations_tracking.append(hidden_state.squeeze(1).detach().cpu().numpy())
-                attention_tracking.append(attn_weights.detach().cpu().numpy())
+                activations_tracking.append(hidden_state.squeeze(1).detach())
+                attention_tracking.append(attn_weights.detach())
 
         # --- Return Values ---
         if track:
-            return predictions, certainties, None, np.zeros_like(activations_tracking), np.array(activations_tracking), np.array(attention_tracking)
+            np_activations = torch.stack(activations_tracking).cpu().numpy() if activations_tracking else np.array(activations_tracking)
+            np_attention = torch.stack(attention_tracking).cpu().numpy() if attention_tracking else np.array(attention_tracking)
+            return predictions, certainties, None, np.zeros_like(np_activations), np_activations, np_attention
         return predictions, certainties, None

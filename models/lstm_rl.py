@@ -83,7 +83,7 @@ class LSTMBaseline(nn.Module):
 
             # --- Tracking ---
             if track:
-                activations_tracking.append(hidden_state.squeeze(1).detach().cpu().numpy())
+                activations_tracking.append(hidden_state.squeeze(1).detach())
 
         hidden_states = (
             hidden_state,
@@ -92,5 +92,6 @@ class LSTMBaseline(nn.Module):
 
         # --- Return Values ---
         if track:
-            return hidden_state, hidden_states, np.array(activations_tracking), np.array(activations_tracking)
+            np_activations = torch.stack(activations_tracking).cpu().numpy() if activations_tracking else np.array(activations_tracking)
+            return hidden_state, hidden_states, np_activations, np_activations
         return hidden_state, hidden_states

@@ -591,14 +591,14 @@ class ContinuousThoughtMachine(nn.Module, PyTorchModelHubMixin):
 
             # --- Tracking ---
             if track:
-                pre_activations_tracking.append(state_trace[:,:,-1].detach().cpu().numpy())
-                post_activations_tracking.append(activated_state.detach().cpu().numpy())
-                attention_tracking.append(attn_weights.detach().cpu().numpy())
-                synch_out_tracking.append(synchronisation_out.detach().cpu().numpy())
-                synch_action_tracking.append(synchronisation_action.detach().cpu().numpy())
+                pre_activations_tracking.append(state_trace[:,:,-1].detach())
+                post_activations_tracking.append(activated_state.detach())
+                attention_tracking.append(attn_weights.detach())
+                synch_out_tracking.append(synchronisation_out.detach())
+                synch_action_tracking.append(synchronisation_action.detach())
 
         # --- Return Values ---
         if track:
-            return predictions, certainties, (np.array(synch_out_tracking), np.array(synch_action_tracking)), np.array(pre_activations_tracking), np.array(post_activations_tracking), np.array(attention_tracking)
+            return predictions, certainties, (torch.stack(synch_out_tracking).cpu().numpy() if synch_out_tracking else np.array(synch_out_tracking), torch.stack(synch_action_tracking).cpu().numpy() if synch_action_tracking else np.array(synch_action_tracking)), torch.stack(pre_activations_tracking).cpu().numpy() if pre_activations_tracking else np.array(pre_activations_tracking), torch.stack(post_activations_tracking).cpu().numpy() if post_activations_tracking else np.array(post_activations_tracking), torch.stack(attention_tracking).cpu().numpy() if attention_tracking else np.array(attention_tracking)
         return predictions, certainties, synchronisation_out
 
