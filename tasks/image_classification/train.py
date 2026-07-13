@@ -694,7 +694,7 @@ if __name__ == "__main__":
                     loss, where_most_certain = image_classification_loss(
                         predictions, certainties, targets, use_most_certain=True
                     )
-                    accuracy = (
+                    accuracy_tensor = (
                         (
                             predictions.argmax(1)[
                                 torch.arange(
@@ -706,9 +706,18 @@ if __name__ == "__main__":
                         )
                         .float()
                         .mean()
-                        .item()
                     )
-                    pbar_desc = f"CTM Loss={loss.item():0.3f}. Acc={accuracy:0.3f}. LR={current_lr:0.6f}. Where_certain={where_most_certain.float().mean().item():0.2f}+-{where_most_certain.float().std().item():0.2f} ({where_most_certain.min().item():d}<->{where_most_certain.max().item():d})"
+                    where_most_certain_float = where_most_certain.float()
+                    stats = torch.stack([
+                        loss.detach(),
+                        accuracy_tensor,
+                        where_most_certain_float.mean(),
+                        where_most_certain_float.std(),
+                        where_most_certain_float.min(),
+                        where_most_certain_float.max()
+                    ]).tolist()
+                    loss_val, accuracy, w_mean, w_std, w_min, w_max = stats
+                    pbar_desc = f"CTM Loss={loss_val:0.3f}. Acc={accuracy:0.3f}. LR={current_lr:0.6f}. Where_certain={w_mean:0.2f}+-{w_std:0.2f} ({int(w_min):d}<->{int(w_max):d})"
 
                 elif args.model == "lstm":
                     predictions, certainties, synchronisation = model(inputs)
@@ -716,7 +725,7 @@ if __name__ == "__main__":
                         predictions, certainties, targets, use_most_certain=True
                     )
                     # LSTM where_most_certain will just be -1 because use_most_certain is False owing to stability issues with LSTM training
-                    accuracy = (
+                    accuracy_tensor = (
                         (
                             predictions.argmax(1)[
                                 torch.arange(
@@ -728,15 +737,26 @@ if __name__ == "__main__":
                         )
                         .float()
                         .mean()
-                        .item()
                     )
-                    pbar_desc = f"LSTM Loss={loss.item():0.3f}. Acc={accuracy:0.3f}. LR={current_lr:0.6f}. Where_certain={where_most_certain.float().mean().item():0.2f}+-{where_most_certain.float().std().item():0.2f} ({where_most_certain.min().item():d}<->{where_most_certain.max().item():d})"
+                    where_most_certain_float = where_most_certain.float()
+                    stats = torch.stack([
+                        loss.detach(),
+                        accuracy_tensor,
+                        where_most_certain_float.mean(),
+                        where_most_certain_float.std(),
+                        where_most_certain_float.min(),
+                        where_most_certain_float.max()
+                    ]).tolist()
+                    loss_val, accuracy, w_mean, w_std, w_min, w_max = stats
+                    pbar_desc = f"LSTM Loss={loss_val:0.3f}. Acc={accuracy:0.3f}. LR={current_lr:0.6f}. Where_certain={w_mean:0.2f}+-{w_std:0.2f} ({int(w_min):d}<->{int(w_max):d})"
 
                 elif args.model == "ff":
                     predictions = model(inputs)
                     loss = nn.CrossEntropyLoss()(predictions, targets)
-                    accuracy = (predictions.argmax(1) == targets).float().mean().item()
-                    pbar_desc = f"FF Loss={loss.item():0.3f}. Acc={accuracy:0.3f}. LR={current_lr:0.6f}"
+                    accuracy_tensor = (predictions.argmax(1) == targets).float().mean()
+                    stats = torch.stack([loss.detach(), accuracy_tensor]).tolist()
+                    loss_val, accuracy = stats
+                    pbar_desc = f"FF Loss={loss_val:0.3f}. Acc={accuracy:0.3f}. LR={current_lr:0.6f}"
 
             scaler.scale(loss).backward()
 
