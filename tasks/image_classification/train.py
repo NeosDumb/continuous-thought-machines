@@ -594,9 +594,17 @@ if __name__ == "__main__":
         checkpoint_path = f"{args.log_dir}/checkpoint.pt"
         if os.path.isfile(checkpoint_path):
             print(f"Reloading from: {checkpoint_path}")
-            checkpoint = torch.load(
-                checkpoint_path, map_location=device, weights_only=True
-            )
+            with torch.serialization.safe_globals([
+                argparse.Namespace,
+                np.core.multiarray._reconstruct,
+                np.ndarray,
+                np.dtype,
+                np.dtypes.Float64DType,
+                np.dtypes.UInt32DType
+            ]):
+                checkpoint = torch.load(
+                    checkpoint_path, map_location=device, weights_only=True
+                )
             if not args.strict_reload:
                 print("WARNING: not using strict reload for model weights!")
             load_result = model.load_state_dict(
