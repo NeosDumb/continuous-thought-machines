@@ -475,7 +475,6 @@ class ContinuousThoughtMachine(nn.Module, PyTorchModelHubMixin):
     def get_neuron_select_type(self):
         """
         Another helper method to accomodate our legacy neuron selection types. 
-        TODO: additional experimentation and possible removal of 'first-last' and 'random'
         """
         print(f"Using neuron select type: {self.neuron_select_type}")
         if self.neuron_select_type == 'first-last':
