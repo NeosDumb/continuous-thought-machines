@@ -250,7 +250,7 @@ def parse_args():
         help="List to exclude from weight decay. Typically good: bn, ln, bias, start",
     )
     parser.add_argument(
-        "--num_workers_train", type=int, default=0, help="Num workers training."
+        "--num_workers_train", type=int, default=4, help="Num workers training."
     )  # Renamed from num_workers, kept default
     parser.add_argument(
         "--gradient_clipping",
@@ -451,7 +451,7 @@ if __name__ == "__main__":
         expand_range=args.expand_range,
     )
 
-    num_workers_test = 1  # Defaulting to 1, can be changed
+    num_workers_test = 4  # Defaulting to 1, can be changed
     trainloader = torch.utils.data.DataLoader(
         train_data,
         batch_size=args.batch_size,
