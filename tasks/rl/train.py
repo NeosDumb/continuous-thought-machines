@@ -561,15 +561,24 @@ if __name__ == "__main__":
                 loss.backward()
 
                 # Log gradient norms
-                total_norm = 0
+                norms = []
+                names = []
                 for name, param in agent.named_parameters():
                     if param.grad is None:
                         print(f"Warning: Gradient for {name} is None!")
                     else:
-                        param_norm = param.grad.data.norm(2).item()
-                        total_norm += param_norm ** 2
+                        norms.append(param.grad.detach().norm(2))
+                        names.append(name)
+
+                if norms:
+                    norms_tensor = torch.stack(norms)
+                    norms_list = norms_tensor.tolist()
+                    total_norm = norms_tensor.norm(2).item()
+                    for name, param_norm in zip(names, norms_list):
                         writer.add_scalar(f"grad_norms/{name}", param_norm, global_step)
-                total_norm = total_norm ** 0.5
+                else:
+                    total_norm = 0.0
+
                 writer.add_scalar("grad_norms/total", total_norm, global_step)
 
 
