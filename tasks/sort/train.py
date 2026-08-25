@@ -322,8 +322,14 @@ if __name__=='__main__':
             optimizer.zero_grad(set_to_none=True)
             scheduler.step()
 
-            accuracy = compute_ctc_accuracy(predictions, targets, predictions.shape[1]-1)
-            pbar.set_description(f'Sorting {args.N_to_sort} real numbers. Loss={loss.item():0.3f}. Accuracy={accuracy:0.3f}. LR={current_lr:0.6f}')
+            if bi % args.log_every == 0 or "pbar_desc" not in locals():
+                accuracy = compute_ctc_accuracy(predictions, targets, predictions.shape[1]-1)
+                stats = torch.stack([loss.detach()]).tolist()
+                loss_val = stats[0]
+                pbar_desc = f'Sorting {args.N_to_sort} real numbers. Loss={loss_val:0.3f}. Accuracy={accuracy:0.3f}. LR={current_lr:0.6f}'
+
+            if bi % args.log_every == 0 or bi == start_iter:
+                pbar.set_description(pbar_desc)
 
 
             # Metrics tracking and plotting

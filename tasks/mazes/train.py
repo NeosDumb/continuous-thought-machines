@@ -674,23 +674,6 @@ if __name__ == "__main__":
                         cirriculum_lookahead=args.cirriculum_lookahead,
                         use_most_certain=True,
                     )
-                    # Accuracy uses predictions[B, S, C, T] indexed at where_most_certain[B] -> gives (B, S, C) -> argmax(2) -> (B,S)
-                    accuracy_finegrained = (
-                        (
-                            predictions.argmax(2)[
-                                torch.arange(
-                                    predictions.size(0), device=predictions.device
-                                ),
-                                :,
-                                where_most_certain,
-                            ]
-                            == targets
-                        )
-                        .float()
-                        .mean()
-                        .item()
-                    )
-
                 elif args.model == "lstm":
                     # LSTM output: (B, SeqLength*5, Ticks), Certainties: (B, Ticks)
                     predictions_raw, certainties, synchronisation = model(inputs)
@@ -705,23 +688,6 @@ if __name__ == "__main__":
                         cirriculum_lookahead=args.cirriculum_lookahead,
                         use_most_certain=False,
                     )
-                    # where_most_certain should be -1 (last tick) here. Accuracy calc follows same logic.
-                    accuracy_finegrained = (
-                        (
-                            predictions.argmax(2)[
-                                torch.arange(
-                                    predictions.size(0), device=predictions.device
-                                ),
-                                :,
-                                where_most_certain,
-                            ]
-                            == targets
-                        )
-                        .float()
-                        .mean()
-                        .item()
-                    )
-
                 elif args.model == "ff":
                     # Assume FF output: (B, SeqLength*5)
                     predictions_raw = model(inputs)
@@ -738,24 +704,6 @@ if __name__ == "__main__":
                         cirriculum_lookahead=args.cirriculum_lookahead,
                         use_most_certain=False,
                     )
-                    # where_most_certain should be -1 here. Accuracy uses 3D prediction tensor.
-                    accuracy_finegrained = (
-                        (predictions.argmax(2) == targets).float().mean().item()
-                    )
-
-                # Extract stats from loss outputs if they are tensors
-                if torch.is_tensor(where_most_certain):
-                    where_most_certain_val = where_most_certain.float().mean().item()
-                    where_most_certain_std = where_most_certain.float().std().item()
-                    where_most_certain_min = where_most_certain.min().item()
-                    where_most_certain_max = where_most_certain.max().item()
-                elif isinstance(
-                    where_most_certain, int
-                ):  # Handle case where it might return -1 directly
-                    where_most_certain_val = float(where_most_certain)
-                    where_most_certain_min = where_most_certain
-                    where_most_certain_max = where_most_certain
-
                 if (
                     isinstance(upto_where, (np.ndarray, list)) and len(upto_where) > 0
                 ):  # Check if it's a list/array
@@ -777,18 +725,50 @@ if __name__ == "__main__":
             optimizer.zero_grad(set_to_none=True)
             scheduler.step()
 
-            # Conditional Tqdm Description
-            pbar_desc = f"Loss={loss.item():0.3f}. Acc(step)={accuracy_finegrained:0.3f}. LR={current_lr:0.6f}."
-            if args.model in CTM_LSTM_MODELS or torch.is_tensor(
-                where_most_certain
-            ):  # Show stats if available
-                pbar_desc += f" Where_certain={where_most_certain_val:0.2f}+-{where_most_certain_std:0.2f} ({where_most_certain_min:d}<->{where_most_certain_max:d})."
-            if isinstance(upto_where, (np.ndarray, list)) and len(upto_where) > 0:
-                pbar_desc += f" Path pred stats: {upto_where_mean:0.2f}+-{upto_where_std:0.2f} ({upto_where_min:d} --> {upto_where_max:d})"
+            if bi % args.log_every == 0 or "pbar_desc" not in locals():
+                if args.model == "ff":
+                    accuracy_finegrained_tensor = (predictions.argmax(2) == targets).float().mean()
+                else:
+                    accuracy_finegrained_tensor = (
+                        predictions.argmax(2)[
+                            torch.arange(predictions.size(0), device=predictions.device),:,where_most_certain
+                        ] == targets
+                    ).float().mean()
 
-            pbar.set_description(
-                f"Dataset={args.dataset}. Model={args.model}. {pbar_desc}"
-            )
+                if torch.is_tensor(where_most_certain):
+                    where_most_certain_float = where_most_certain.float()
+                    stats = torch.stack([
+                        loss.detach(),
+                        accuracy_finegrained_tensor,
+                        where_most_certain_float.mean(),
+                        where_most_certain_float.std(),
+                        where_most_certain_float.min(),
+                        where_most_certain_float.max()
+                    ]).tolist()
+                    loss_val, accuracy_finegrained, where_most_certain_val, where_most_certain_std, where_most_certain_min, where_most_certain_max = stats
+                    where_most_certain_min = int(where_most_certain_min)
+                    where_most_certain_max = int(where_most_certain_max)
+                else:
+                    stats = torch.stack([loss.detach(), accuracy_finegrained_tensor]).tolist()
+                    loss_val, accuracy_finegrained = stats
+                    where_most_certain_val = float(where_most_certain)
+                    where_most_certain_std = 0.0
+                    where_most_certain_min = where_most_certain
+                    where_most_certain_max = where_most_certain
+
+                # Conditional Tqdm Description
+                pbar_desc = f"Loss={loss_val:0.3f}. Acc(step)={accuracy_finegrained:0.3f}. LR={current_lr:0.6f}."
+                if args.model in CTM_LSTM_MODELS or torch.is_tensor(
+                    where_most_certain
+                ):  # Show stats if available
+                    pbar_desc += f" Where_certain={where_most_certain_val:0.2f}+-{where_most_certain_std:0.2f} ({where_most_certain_min:d}<->{where_most_certain_max:d})."
+                if isinstance(upto_where, (np.ndarray, list)) and len(upto_where) > 0:
+                    pbar_desc += f" Path pred stats: {upto_where_mean:0.2f}+-{upto_where_std:0.2f} ({int(upto_where_min):d} --> {int(upto_where_max):d})"
+
+            if bi % args.log_every == 0 or bi == start_iter:
+                pbar.set_description(
+                    f"Dataset={args.dataset}. Model={args.model}. {pbar_desc}"
+                )
 
             # Metrics tracking and plotting
             if bi % args.track_every == 0 and (bi != 0 or args.reload_model_only):
