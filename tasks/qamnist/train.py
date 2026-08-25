@@ -256,8 +256,29 @@ if __name__=='__main__':
             optimizer.zero_grad(set_to_none=True)
             scheduler.step()
 
-            accuracy = (predictions_answer_steps.argmax(1)[torch.arange(predictions_answer_steps.size(0), device=predictions.device),where_most_certain] == targets).float().mean().item()
-            pbar.set_description(f'Dataset=QAMNIST. Loss={loss.item():0.3f}. Accuracy={accuracy:0.3f}. LR={current_lr:0.6f}. Where_certain={where_most_certain.float().mean().item():0.2f}+-{where_most_certain.float().std().item():0.2f} ({where_most_certain.min().item():d}<->{where_most_certain.max().item():d})')
+            if bi % args.log_every == 0 or "pbar_desc" not in locals():
+                accuracy_tensor = (
+                    predictions_answer_steps.argmax(1)[
+                        torch.arange(predictions_answer_steps.size(0), device=predictions.device),
+                        where_most_certain
+                    ] == targets
+                ).float().mean()
+
+                where_most_certain_float = where_most_certain.float()
+                stats = torch.stack([
+                    loss.detach(),
+                    accuracy_tensor,
+                    where_most_certain_float.mean(),
+                    where_most_certain_float.std(),
+                    where_most_certain_float.min(),
+                    where_most_certain_float.max()
+                ]).tolist()
+
+                loss_val, accuracy, w_mean, w_std, w_min, w_max = stats
+                pbar_desc = f"Loss={loss_val:0.3f}. Accuracy={accuracy:0.3f}. LR={current_lr:0.6f}. Where_certain={w_mean:0.2f}+-{w_std:0.2f} ({int(w_min):d}<->{int(w_max):d})"
+
+            if bi % args.log_every == 0 or bi == start_iter:
+                pbar.set_description(f'Dataset=QAMNIST. {pbar_desc}')
 
             # Metrics tracking and plotting
             if bi%args.track_every==0:
